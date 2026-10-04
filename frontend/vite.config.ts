@@ -9,6 +9,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': 'http://127.0.0.1:8000',
+      '/v1': 'http://127.0.0.1:8000',
+      '/healthz': 'http://127.0.0.1:8000',
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
