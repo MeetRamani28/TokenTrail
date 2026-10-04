@@ -1,3 +1,9 @@
+from app.schemas.alert import (
+    AlertExecutionSummary,
+    AlertRuleCreate,
+    AlertRuleResponse,
+    JobsRunResponse,
+)
 from app.schemas.analytics import (
     ModelUsageSummary,
     OverviewResponse,
@@ -36,5 +42,9 @@ __all__ = [
     "SpanWaterfallItem",
     "TraceDetailResponse",
     "ModelUsageSummary",
+    "AlertRuleCreate",
+    "AlertRuleResponse",
+    "AlertExecutionSummary",
+    "JobsRunResponse",
 ]
 
