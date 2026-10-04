@@ -51,9 +51,13 @@ pnpm-debug.log*
 
 # Databases and Local Storage
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 backend/*.db
+backend/*.db-shm
+backend/*.db-wal
 backend/*.sqlite
 backend/*.sqlite3
 
