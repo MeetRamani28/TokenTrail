@@ -83,7 +83,9 @@ class Settings(BaseSettings):
         if self.is_production:
             # 1. Database must be Postgres
             if self.DATABASE_URL.startswith("sqlite"):
-                raise ValueError("SQLite cannot be used in production mode; DATABASE_URL must be PostgreSQL")
+                raise ValueError(
+                    "SQLite cannot be used in production mode; DATABASE_URL must be PostgreSQL"
+                )
 
             # 2. CORS cannot be wildcard
             if "*" in self.cors_origins_list:
@@ -94,7 +96,9 @@ class Settings(BaseSettings):
                 not self.INTERNAL_JOBS_TOKEN
                 or self.INTERNAL_JOBS_TOKEN == "dev_internal_jobs_token_change_in_production"
             ):
-                raise ValueError("A secure INTERNAL_JOBS_TOKEN must be configured in production mode")
+                raise ValueError(
+                    "A secure INTERNAL_JOBS_TOKEN must be configured in production mode"
+                )
 
         return self
 

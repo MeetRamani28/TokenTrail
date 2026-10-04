@@ -27,11 +27,15 @@ def main() -> None:
         os.environ["APP_ENV"] = "development"
         # In dev mode, default host is 127.0.0.1 and port is 8000 with reload
         from app.core.config import get_settings
+
         get_settings.cache_clear()
         settings = get_settings()
 
         import uvicorn
-        print(f"Starting TokenTrail in DEVELOPMENT mode on {settings.HOST}:{settings.PORT} (reload=True)...")
+
+        print(
+            f"Starting TokenTrail in DEVELOPMENT mode on {settings.HOST}:{settings.PORT} (reload=True)..."
+        )
         uvicorn.run(
             "app.main:app",
             host=settings.HOST,
@@ -44,10 +48,12 @@ def main() -> None:
     elif mode == "prod":
         os.environ["APP_ENV"] = "production"
         from app.core.config import get_settings
+
         get_settings.cache_clear()
         settings = get_settings()
 
         import uvicorn
+
         port = int(os.getenv("PORT", str(settings.PORT)))
         host = os.getenv("HOST", "0.0.0.0")
         print(f"Starting TokenTrail in PRODUCTION mode on {host}:{port} (reload=False)...")
