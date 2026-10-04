@@ -5,6 +5,7 @@ from typing import Any
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 # Set test environment
 os.environ["APP_ENV"] = "test"
@@ -17,11 +18,10 @@ from app.models.base import Base  # noqa: E402
 from app.models.models import ApiKey, Project, User  # noqa: E402
 from app.services.api_key import generate_api_key  # noqa: E402
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
 test_engine = create_async_engine(
-    TEST_DATABASE_URL,
+    "sqlite+aiosqlite://",
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 
 TestSessionLocal = async_sessionmaker(

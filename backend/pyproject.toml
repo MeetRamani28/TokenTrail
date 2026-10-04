@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
     "sqlalchemy>=2.0.36",
+    "tokentrail",
     "uvicorn[standard]>=0.32.0",
 ]
 
@@ -26,6 +27,12 @@ dev = [
     "ruff>=0.9.0",
 ]
 
+[tool.uv.workspace]
+members = ["sdk"]
+
+[tool.uv.sources]
+tokentrail = { workspace = true }
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -37,6 +44,7 @@ ignore = ["E501"]
 [tool.mypy]
 python_version = "3.12"
 strict = false
+mypy_path = ".:sdk/src"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -44,7 +52,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q --cov=app --cov-report=term-missing"
-testpaths = ["tests"]
+addopts = "-ra -q --cov=app --cov=sdk/src/tokentrail --cov-report=term-missing"
+testpaths = ["tests", "sdk/tests"]
+pythonpath = [".", "sdk/src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
