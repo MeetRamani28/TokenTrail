@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.analytics import router as analytics_router
 from app.api.v1.ingest import router as ingest_router
 from app.api.v1.prices import router as prices_router
 from app.core.config import get_settings
@@ -42,6 +43,7 @@ if settings.cors_origins_list:
 # Routers
 app.include_router(ingest_router)
 app.include_router(prices_router)
+app.include_router(analytics_router)
 
 
 @app.get("/healthz", tags=["Health"])
