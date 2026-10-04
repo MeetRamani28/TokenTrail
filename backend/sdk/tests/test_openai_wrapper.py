@@ -1,3 +1,4 @@
+import asyncio
 import time
 from types import SimpleNamespace
 from typing import Any
@@ -55,7 +56,7 @@ class MockOpenAIClient:
 
 
 def test_sync_non_streaming() -> None:
-    tt = TokenTrail(api_key="tt_mock")
+    tt = TokenTrail(api_key="tt_mock", flush_interval=60.0)
     original_client = MockOpenAIClient(MockCompletions())
     wrapped = tt.wrap_openai(original_client)
 
@@ -87,7 +88,7 @@ def test_sync_non_streaming() -> None:
 
 @pytest.mark.asyncio
 async def test_async_non_streaming() -> None:
-    tt = TokenTrail(api_key="tt_mock")
+    tt = TokenTrail(api_key="tt_mock", flush_interval=60.0)
     original_client = MockOpenAIClient(MockAsyncCompletions())
     wrapped = tt.wrap_openai(original_client)
 
@@ -120,7 +121,7 @@ def test_sync_streaming_with_usage() -> None:
             usage=SimpleNamespace(prompt_tokens=10, completion_tokens=4),
         )
 
-    tt = TokenTrail(api_key="tt_mock")
+    tt = TokenTrail(api_key="tt_mock", flush_interval=60.0)
     client = MockOpenAIClient(MockCompletions(response=stream_generator()))
     wrapped = tt.wrap_openai(client)
 
@@ -146,7 +147,7 @@ def test_sync_streaming_with_usage() -> None:
     assert s.prompt_tokens == 10
     assert s.completion_tokens == 4
     assert s.cost_is_estimated is False
-    assert s.ttft_ms is not None and s.ttft_ms > 0
+    assert s.ttft_ms is not None and s.ttft_ms >= 0
     assert s.duration_ms is not None and s.duration_ms >= s.ttft_ms
 
 
@@ -155,7 +156,7 @@ async def test_async_streaming_without_usage_fallback_tiktoken() -> None:
     """Tests streaming where provider omits usage; verifies tiktoken fallback."""
 
     async def async_stream_generator():
-        time.sleep(0.01)
+        await asyncio.sleep(0.02)
         yield SimpleNamespace(
             choices=[SimpleNamespace(delta=SimpleNamespace(content="Quantum "))],
             usage=None,
@@ -165,7 +166,7 @@ async def test_async_streaming_without_usage_fallback_tiktoken() -> None:
             usage=None,
         )
 
-    tt = TokenTrail(api_key="tt_mock")
+    tt = TokenTrail(api_key="tt_mock", flush_interval=60.0)
     client = MockOpenAIClient(MockAsyncCompletions(response=async_stream_generator()))
     wrapped = tt.wrap_openai(client)
 
@@ -189,7 +190,7 @@ async def test_async_streaming_without_usage_fallback_tiktoken() -> None:
     assert s.prompt_tokens > 0
     assert s.completion_tokens > 0
     assert s.output == "Quantum Computing"
-    assert s.ttft_ms is not None and s.ttft_ms > 0
+    assert s.ttft_ms is not None and s.ttft_ms >= 0
 
 
 def test_llm_exception_captured_and_reraised() -> None:

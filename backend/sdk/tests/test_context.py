@@ -36,7 +36,7 @@ def test_sync_nested_spans() -> None:
 
 @pytest.mark.asyncio
 async def test_async_nested_spans() -> None:
-    tt = TokenTrail(api_key="tt_mock_key", endpoint="http://localhost:8000")
+    tt = TokenTrail(api_key="tt_mock_key", endpoint="http://localhost:8000", flush_interval=60.0)
 
     async with tt.span("async_root", type="chain") as root:
         root_trace = root.trace_id
