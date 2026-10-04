@@ -19,6 +19,11 @@ def get_default_client() -> TokenTrail:
     return _default_global_client
 
 
+def set_default_client(client: TokenTrail) -> None:
+    global _default_global_client
+    _default_global_client = client
+
+
 def trace(
     name: str | None = None,
     type: str = "chain",
