@@ -20,6 +20,10 @@ settings = get_settings()
 connect_args: dict[str, Any] = {}
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args["check_same_thread"] = False
+elif "postgresql" in settings.DATABASE_URL:
+    # Supabase Transaction Pooler (Supavisor/PgBouncer port 6543) requires disabling prepared statement cache
+    connect_args["statement_cache_size"] = 0
+    connect_args["prepared_statement_cache_size"] = 0
 
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
