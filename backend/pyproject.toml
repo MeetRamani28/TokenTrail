@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
     "sqlalchemy>=2.0.36",
+    "tiktoken>=0.8.0",
     "tokentrail",
     "uvicorn[standard]>=0.32.0",
 ]
@@ -21,6 +22,7 @@ dependencies = [
 dev = [
     "httpx>=0.28.0",
     "mypy>=1.14.0",
+    "openai>=1.50.0",
     "pytest>=8.3.0",
     "pytest-asyncio>=0.25.0",
     "pytest-cov>=6.0.0",

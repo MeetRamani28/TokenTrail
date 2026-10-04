@@ -221,6 +221,16 @@ class TokenTrail:
             metadata=metadata,
         )
 
+    def wrap_openai(self, client: Any) -> Any:
+        """Wraps an OpenAI or OpenAI-compatible client instance (e.g. Groq, OpenRouter)."""
+        try:
+            from tokentrail.instrumentation.openai import wrap_openai_client
+
+            return wrap_openai_client(self, client)
+        except Exception as e:
+            logger.debug("Failed to wrap OpenAI client: %s", e)
+            return client
+
     def _enqueue_span(self, span_data: SpanData) -> None:
         try:
             self.queue.put(span_data)
