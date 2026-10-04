@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -11,13 +12,20 @@ from app.api.v1.ingest import router as ingest_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.prices import router as prices_router
 from app.core.config import get_settings
+from app.core.dev_seed import seed_dev_defaults
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup actions
+    if settings.is_development:
+        try:
+            await seed_dev_defaults()
+        except Exception as e:
+            logger.warning("Dev auto-seeding skipped: %s", e)
     yield
     # Shutdown actions
 
