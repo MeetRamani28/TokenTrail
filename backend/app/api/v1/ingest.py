@@ -1,3 +1,6 @@
+import time
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +45,25 @@ async def get_current_api_key(
     return api_key_record
 
 
+_RATE_LIMIT_WINDOW = 60.0  # 60s window
+_MAX_REQUESTS_PER_WINDOW = 300  # 300 req/min per key
+_rate_limit_records: dict[str, list[float]] = defaultdict(list)
+
+
+def check_rate_limit(key_id: str) -> None:
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW
+    timestamps = [t for t in _rate_limit_records[key_id] if t > cutoff]
+    if len(timestamps) >= _MAX_REQUESTS_PER_WINDOW:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Maximum 300 requests per minute per API key.",
+            headers={"Retry-After": "60"},
+        )
+    timestamps.append(now)
+    _rate_limit_records[key_id] = timestamps
+
+
 @router.post(
     "/ingest",
     response_model=IngestBatchResponse,
@@ -55,6 +77,9 @@ async def ingest_spans(
     db: AsyncSession = Depends(get_db),
 ) -> IngestBatchResponse:
     """Ingests spans and traces idempotently into the active project."""
+    # Check rate limit
+    check_rate_limit(api_key.id)
+
     # Check payload size header if present
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_PAYLOAD_BYTES:

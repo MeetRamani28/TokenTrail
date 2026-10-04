@@ -77,9 +77,7 @@ def get_llm_client() -> Any:
         return generator()
 
     mock_client = SimpleNamespace(
-        chat=SimpleNamespace(
-            completions=SimpleNamespace(create=mock_create)
-        )
+        chat=SimpleNamespace(completions=SimpleNamespace(create=mock_create))
     )
     return tt.wrap_openai(mock_client)
 

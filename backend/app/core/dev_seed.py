@@ -17,9 +17,7 @@ async def seed_dev_defaults() -> None:
 
     async with AsyncSessionLocal() as session:
         # 1. Dev user
-        user_res = await session.execute(
-            select(User).where(User.clerk_user_id == "dev_user_admin")
-        )
+        user_res = await session.execute(select(User).where(User.clerk_user_id == "dev_user_admin"))
         user = user_res.scalar_one_or_none()
         if not user:
             user = User(clerk_user_id="dev_user_admin")
@@ -27,9 +25,7 @@ async def seed_dev_defaults() -> None:
             await session.flush()
 
         # 2. Default project
-        proj_res = await session.execute(
-            select(Project).where(Project.owner_user_id == user.id)
-        )
+        proj_res = await session.execute(select(Project).where(Project.owner_user_id == user.id))
         project = proj_res.scalars().first()
         if not project:
             project = Project(owner_user_id=user.id, name="Default Project", retention_days=30)
@@ -39,9 +35,7 @@ async def seed_dev_defaults() -> None:
         # 3. Default API key: tt_live_dev_test_key
         raw_key = "tt_live_dev_test_key"
         key_hash = hash_api_key(raw_key)
-        key_res = await session.execute(
-            select(ApiKey).where(ApiKey.key_hash == key_hash)
-        )
+        key_res = await session.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
         if not key_res.scalar_one_or_none():
             api_key = ApiKey(
                 project_id=project.id,
@@ -60,9 +54,7 @@ async def seed_dev_defaults() -> None:
         ]
         for provider, model, input_rate, output_rate in default_prices:
             price_res = await session.execute(
-                select(ModelPrice).where(
-                    ModelPrice.provider == provider, ModelPrice.model == model
-                )
+                select(ModelPrice).where(ModelPrice.provider == provider, ModelPrice.model == model)
             )
             if not price_res.scalar_one_or_none():
                 session.add(

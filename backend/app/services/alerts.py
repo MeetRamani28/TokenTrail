@@ -41,7 +41,9 @@ async def send_webhook_notification(webhook_url: str, payload: dict[str, Any]) -
             resp = await client.post(webhook_url, json=payload)
             if resp.status_code in (200, 204):
                 return True
-            logger.warning("Webhook returned unexpected status code %s: %s", resp.status_code, resp.text)
+            logger.warning(
+                "Webhook returned unexpected status code %s: %s", resp.status_code, resp.text
+            )
             return False
     except Exception as e:
         logger.warning("Failed to dispatch alert webhook to %s: %s", webhook_url, e)
@@ -134,7 +136,11 @@ class AlertService:
                     "color": 15158332,
                     "fields": [
                         {"name": "Rule Type", "value": rule.type, "inline": True},
-                        {"name": "Current Value", "value": str(round(current_value, 4)), "inline": True},
+                        {
+                            "name": "Current Value",
+                            "value": str(round(current_value, 4)),
+                            "inline": True,
+                        },
                         {"name": "Threshold", "value": str(rule.threshold), "inline": True},
                         {"name": "Window", "value": rule.window, "inline": True},
                     ],

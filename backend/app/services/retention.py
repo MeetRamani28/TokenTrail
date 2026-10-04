@@ -29,18 +29,16 @@ class RetentionService:
             cutoff = now - timedelta(days=retention_days)
 
             # 1. Delete expired spans
-            del_spans_stmt = (
-                delete(Span)
-                .where(Span.project_id == proj.id, Span.started_at < cutoff)
+            del_spans_stmt = delete(Span).where(
+                Span.project_id == proj.id, Span.started_at < cutoff
             )
             spans_res = await db.execute(del_spans_stmt)
             spans_count = int(getattr(spans_res, "rowcount", 0) or 0)
             total_spans_deleted += max(0, spans_count)
 
             # 2. Delete expired traces
-            del_traces_stmt = (
-                delete(Trace)
-                .where(Trace.project_id == proj.id, Trace.started_at < cutoff)
+            del_traces_stmt = delete(Trace).where(
+                Trace.project_id == proj.id, Trace.started_at < cutoff
             )
             traces_res = await db.execute(del_traces_stmt)
             traces_count = int(getattr(traces_res, "rowcount", 0) or 0)

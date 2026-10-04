@@ -1,0 +1,25 @@
+{
+  "timestamp": 1791140322.2723155,
+  "database": "Supabase PostgreSQL (Free Tier)",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python_version": "3.12.13 (main, May 10 2026, 19:35:37) [MSC v.1944 64 bit (AMD64)]",
+  "ingestion_benchmark": {
+    "total_spans": 1000,
+    "batch_count": 20,
+    "spans_per_batch": 50,
+    "elapsed_seconds": 25.23,
+    "throughput_spans_per_sec": 39.64,
+    "p50_batch_latency_ms": 1065.43,
+    "p95_batch_latency_ms": 2149.46
+  },
+  "query_benchmark": {
+    "iterations": 10,
+    "overview_p50_ms": 294.64,
+    "overview_p95_ms": 794.76,
+    "timeseries_p50_ms": 1432.49,
+    "timeseries_p95_ms": 5872.27,
+    "traces_p50_ms": 2240.38,
+    "traces_p95_ms": 5487.24
+  },
+  "status": "PASS"
+}

@@ -18,11 +18,22 @@ from app.models.base import Base  # noqa: E402
 from app.models.models import ApiKey, Project, User  # noqa: E402
 from app.services.api_key import generate_api_key  # noqa: E402
 
-test_engine = create_async_engine(
-    "sqlite+aiosqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+test_db_url = os.getenv("TEST_DATABASE_URL")
+if not test_db_url or test_db_url.startswith("sqlite"):
+    test_engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    connect_args: dict[str, Any] = {}
+    if "postgresql" in test_db_url:
+        connect_args["statement_cache_size"] = 0
+        connect_args["prepared_statement_cache_size"] = 0
+    test_engine = create_async_engine(
+        test_db_url,
+        connect_args=connect_args,
+    )
 
 TestSessionLocal = async_sessionmaker(
     bind=test_engine,

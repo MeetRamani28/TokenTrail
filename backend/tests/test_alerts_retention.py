@@ -218,16 +218,12 @@ async def test_retention_purge_older_records(
     assert spans_del == 1
 
     # Check DB: only recent trace & span remain
-    t_res = await db_session.execute(
-        select(Trace).where(Trace.project_id == project.id)
-    )
+    t_res = await db_session.execute(select(Trace).where(Trace.project_id == project.id))
     remaining_traces = t_res.scalars().all()
     assert len(remaining_traces) == 1
     assert remaining_traces[0].trace_id == "tr_retention_recent"
 
-    s_res = await db_session.execute(
-        select(Span).where(Span.project_id == project.id)
-    )
+    s_res = await db_session.execute(select(Span).where(Span.project_id == project.id))
     remaining_spans = s_res.scalars().all()
     assert len(remaining_spans) == 1
     assert remaining_spans[0].span_id == "sp_retention_recent"
@@ -257,9 +253,7 @@ async def test_alerts_crud_api(client: AsyncClient, test_setup: dict[str, Any]) 
     assert created_rule["threshold"] == 10.0
 
     # 2. List alert rules
-    resp_list = await client.get(
-        "/api/alerts", headers={"Authorization": "Bearer test_token"}
-    )
+    resp_list = await client.get("/api/alerts", headers={"Authorization": "Bearer test_token"})
     assert resp_list.status_code == 200
     rules = resp_list.json()
     assert any(r["id"] == rule_id for r in rules)

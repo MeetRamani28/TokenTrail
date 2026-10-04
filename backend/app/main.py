@@ -50,6 +50,19 @@ if settings.cors_origins_list:
         allow_headers=["*"],
     )
 
+
+@app.middleware("http")
+async def security_headers_middleware(request: Any, call_next: Any) -> Any:
+    """Inject hardened security headers into all responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if settings.is_production:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
 # Routers
 app.include_router(ingest_router)
 app.include_router(prices_router)

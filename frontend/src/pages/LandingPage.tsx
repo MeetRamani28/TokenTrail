@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { TokenTrailCanvas } from '../components/three/TokenTrailCanvas';
 import {
   ArrowRight,
   Clock,
@@ -9,11 +8,17 @@ import {
   Zap,
 } from 'lucide-react';
 
+const TokenTrailCanvas = React.lazy(() =>
+  import('../components/three/TokenTrailCanvas').then((m) => ({ default: m.TokenTrailCanvas }))
+);
+
 export const LandingPage: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden font-sans">
       {/* 3D Canvas Background */}
-      <TokenTrailCanvas />
+      <Suspense fallback={<div className="absolute inset-0 bg-slate-950" />}>
+        <TokenTrailCanvas />
+      </Suspense>
 
       {/* Navigation Header */}
       <header className="relative z-10 max-w-7xl mx-auto w-full px-6 h-20 flex items-center justify-between border-b border-slate-800/60">

@@ -17,6 +17,17 @@ export default defineConfig({
       '/healthz': 'http://127.0.0.1:8000',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('three') || id.includes('@react-three')) {
+            return 'three';
+          }
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

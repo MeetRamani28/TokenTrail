@@ -78,7 +78,9 @@ def generate_trace_payload(tt: TokenTrail, error_rate: float) -> None:
 
             if has_error:
                 s_llm.status = "error"
-                s_llm.error_type = random.choice(["RateLimitError", "APIConnectionError", "ModelTimeoutError"])
+                s_llm.error_type = random.choice(
+                    ["RateLimitError", "APIConnectionError", "ModelTimeoutError"]
+                )
                 s_llm.error_message = f"Simulated {s_llm.error_type}: Provider returned 429 or 504"
                 root_span.status = "error"
 
@@ -87,16 +89,24 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate synthetic LLM traces for TokenTrail")
     parser.add_argument("--count", type=int, default=50, help="Total number of traces to generate")
     parser.add_argument("--rps", type=float, default=10.0, help="Requests per second rate")
-    parser.add_argument("--error-rate", type=float, default=0.15, help="Fraction of error traces (0.0 - 1.0)")
-    parser.add_argument("--endpoint", type=str, default=os.getenv("TOKENTRAIL_ENDPOINT", "http://127.0.0.1:8000"))
-    parser.add_argument("--api-key", type=str, default=os.getenv("TOKENTRAIL_API_KEY", "tt_live_dev_test_key"))
+    parser.add_argument(
+        "--error-rate", type=float, default=0.15, help="Fraction of error traces (0.0 - 1.0)"
+    )
+    parser.add_argument(
+        "--endpoint", type=str, default=os.getenv("TOKENTRAIL_ENDPOINT", "http://127.0.0.1:8000")
+    )
+    parser.add_argument(
+        "--api-key", type=str, default=os.getenv("TOKENTRAIL_API_KEY", "tt_live_dev_test_key")
+    )
 
     args = parser.parse_args()
 
     print("==================================================")
     print(" TokenTrail Synthetic Traffic Load Generator")
     print(f" Target Endpoint: {args.endpoint}")
-    print(f" Generating {args.count} traces at ~{args.rps} req/sec (Error Rate: {args.error_rate * 100:.1f}%)")
+    print(
+        f" Generating {args.count} traces at ~{args.rps} req/sec (Error Rate: {args.error_rate * 100:.1f}%)"
+    )
     print("==================================================")
 
     tt = TokenTrail(api_key=args.api_key, endpoint=args.endpoint, flush_interval=1.0)
@@ -110,7 +120,9 @@ def main() -> None:
         time.sleep(delay_between_requests)
 
     elapsed = time.perf_counter() - start
-    print(f"\n[LoadGen] Generated {args.count} traces in {elapsed:.2f}s (~{args.count / elapsed:.1f} rps)")
+    print(
+        f"\n[LoadGen] Generated {args.count} traces in {elapsed:.2f}s (~{args.count / elapsed:.1f} rps)"
+    )
     print("[LoadGen] Flushing remaining telemetry...")
     tt.flush(timeout=10.0)
     print("[LoadGen] Telemetry generation complete!")

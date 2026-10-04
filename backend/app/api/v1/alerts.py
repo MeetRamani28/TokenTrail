@@ -53,10 +53,7 @@ async def delete_alert_rule(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     """Delete an alert rule."""
-    stmt = (
-        delete(AlertRule)
-        .where(AlertRule.id == rule_id, AlertRule.project_id == auth.project.id)
-    )
+    stmt = delete(AlertRule).where(AlertRule.id == rule_id, AlertRule.project_id == auth.project.id)
     res = await db.execute(stmt)
     deleted_count = int(getattr(res, "rowcount", 0) or 0)
     if not deleted_count:

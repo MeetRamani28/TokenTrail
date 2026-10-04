@@ -1,0 +1,15 @@
+{
+  "timestamp": 1791139982.9269652,
+  "iterations": 2000,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python_version": "3.12.13 (main, May 10 2026, 19:35:37) [MSC v.1944 64 bit (AMD64)]",
+  "baseline_p50_ms": 0.0002,
+  "baseline_p99_ms": 0.0004,
+  "with_sdk_p50_ms": 0.0138,
+  "with_sdk_p99_ms": 0.067952,
+  "overhead_p50_ms": 0.0136,
+  "overhead_p99_ms": 0.067552,
+  "target_p50_ms": 0.5,
+  "target_p99_ms": 2.0,
+  "status": "PASS"
+}

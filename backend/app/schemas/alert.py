@@ -8,7 +8,9 @@ class AlertRuleCreate(BaseModel):
         description="Type of metric to monitor: daily_budget ($), error_rate (%), p95_latency (ms)"
     )
     threshold: float = Field(gt=0, description="Threshold value that triggers the alert")
-    window: str = Field(default="24h", description="Time window for rolling evaluation (e.g. 1h, 24h)")
+    window: str = Field(
+        default="24h", description="Time window for rolling evaluation (e.g. 1h, 24h)"
+    )
     webhook_url: str = Field(description="Discord or Slack compatible webhook URL")
     cooldown_minutes: int = Field(
         default=60, ge=5, description="Minutes to wait before firing another alert for this rule"

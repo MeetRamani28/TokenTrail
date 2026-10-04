@@ -1,0 +1,26 @@
+{
+  "timestamp": 1791140204.0818992,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python_version": "3.12.13 (main, May 10 2026, 19:35:37) [MSC v.1944 64 bit (AMD64)]",
+  "backend_down_resilience": {
+    "calls": 50,
+    "host_exceptions": 0,
+    "sender_failures": 10,
+    "elapsed_seconds": 20.35,
+    "status": "PASS"
+  },
+  "queue_overflow": {
+    "enqueued": 250,
+    "max_queue_size": 50,
+    "dropped_spans": 200,
+    "host_exceptions": 0,
+    "status": "PASS"
+  },
+  "postgres_idempotency": {
+    "resend_iterations": 10,
+    "database_traces": 1,
+    "database_spans": 1,
+    "duplicates_detected": 0,
+    "status": "PASS"
+  }
+}

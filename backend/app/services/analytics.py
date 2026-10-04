@@ -155,9 +155,7 @@ class AnalyticsService:
 
         # Standard trace-level bucketing (none or status)
         trace_query = (
-            select(Trace)
-            .where(Trace.project_id == project_id)
-            .order_by(Trace.started_at.asc())
+            select(Trace).where(Trace.project_id == project_id).order_by(Trace.started_at.asc())
         )
         if from_time:
             trace_query = trace_query.where(Trace.started_at >= from_time)
@@ -190,9 +188,7 @@ class AnalyticsService:
                         trace_buckets[(bucket, status_grp)].append(dur)
 
         trace_points: list[TimeseriesPoint] = []
-        for (bucket_ts, group_name), values in sorted(
-            trace_buckets.items(), key=lambda x: x[0][0]
-        ):
+        for (bucket_ts, group_name), values in sorted(trace_buckets.items(), key=lambda x: x[0][0]):
             if metric == "latency":
                 val = sum(values) / len(values) if values else 0.0
             else:
@@ -222,9 +218,7 @@ class AnalyticsService:
         to_time: datetime | None = None,
     ) -> TraceListResponse:
         query = (
-            select(Trace)
-            .options(selectinload(Trace.spans))
-            .where(Trace.project_id == project_id)
+            select(Trace).options(selectinload(Trace.spans)).where(Trace.project_id == project_id)
         )
 
         if status:

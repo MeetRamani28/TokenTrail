@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-and-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: tokentrail_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: uv sync --all-extras
+
+      - name: Lint and Format Check
+        working-directory: ./backend
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Type Check (mypy)
+        working-directory: ./backend
+        run: uv run mypy app
+
+      - name: Run Pytest (SQLite Mode)
+        working-directory: ./backend
+        run: uv run pytest --cov
+
+      - name: Run Pytest (PostgreSQL Mode)
+        working-directory: ./backend
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/tokentrail_test
+        run: uv run pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Type Check
+        working-directory: ./frontend
+        run: npm run typecheck
+
+      - name: Unit Tests
+        working-directory: ./frontend
+        run: npm run test:run
+
+      - name: Production Build
+        working-directory: ./frontend
+        run: npm run build
