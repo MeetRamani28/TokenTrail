@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCreatePrice, useDeletePrice, usePrices, useProjectKey, useProjects, useRollProjectKey } from '../api/queries';
 import { useAppSelector } from '../store';
 import {
+  AlertTriangle,
   CheckCheck,
   Coins,
   Copy,
   FolderKanban,
   Key,
+  KeyRound,
   Plus,
   RefreshCw,
   ShieldCheck,
   Terminal,
   Trash2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +34,19 @@ export const SettingsPage: React.FC = () => {
   const { data: keyData } = useProjectKey(effectiveProjectId);
   const [rolledKey, setRolledKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [isRollModalOpen, setIsRollModalOpen] = useState(false);
+
+  const handleConfirmRollKey = async () => {
+    if (!effectiveProjectId) return;
+    try {
+      const res = await rollKeyMutation.mutateAsync(effectiveProjectId);
+      setRolledKey(res.api_key);
+      setIsRollModalOpen(false);
+      toast.success('Fresh API key generated and activated!');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate key');
+    }
+  };
 
   const [provider, setProvider] = useState('groq');
   const [model, setModel] = useState('');
@@ -246,20 +264,12 @@ export const SettingsPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={async () => {
-                if (!effectiveProjectId) return;
-                const ok = window.confirm(
-                  `Generate a fresh API key for "${keyData?.project_name || activeProject?.name}"?\nPrevious keys for this project will be safely retired.`
-                );
-                if (!ok) return;
-
-                try {
-                  const res = await rollKeyMutation.mutateAsync(effectiveProjectId);
-                  setRolledKey(res.api_key);
-                  toast.success('Fresh API key generated and activated!');
-                } catch (err: unknown) {
-                  toast.error(err instanceof Error ? err.message : 'Failed to generate key');
+              onClick={() => {
+                if (!effectiveProjectId) {
+                  toast.error('No project selected');
+                  return;
                 }
+                setIsRollModalOpen(true);
               }}
               disabled={rollKeyMutation.isPending || !effectiveProjectId}
               className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-medium flex items-center gap-2 transition-colors cursor-pointer shrink-0"
@@ -353,7 +363,7 @@ export const SettingsPage: React.FC = () => {
               TokenTrail uses an asynchronous, bounded background queue. Even if the network drops or the telemetry endpoint is temporarily down, the SDK <strong>never throws exceptions</strong> or interrupts your live users or LLM streams in production.
             </p>
             <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px]">
-              <p className="text-slate-500"># In your live Python project (e.g. Nexus RAG):</p>
+              <p className="text-slate-500"># In your live Python project (e.g. SQLGuard / Nexus RAG):</p>
               <p className="text-emerald-400">from tokentrail import TokenTrail</p>
               <p className="text-emerald-400 mt-1">tt = TokenTrail()  # Safe auto-fallback if TOKENTRAIL_API_KEY is not set</p>
               <p className="text-cyan-400 mt-1">client = tt.wrap_openai(openai_client)  # Auto-captures tokens & cost</p>
@@ -361,6 +371,92 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Custom Roll API Key Modal */}
+      {isRollModalOpen &&
+        createPortal(
+          <AnimatePresence>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !rollKeyMutation.isPending && setIsRollModalOpen(false)}
+                className="fixed inset-0 bg-slate-950/85 backdrop-blur-md cursor-pointer"
+              />
+
+              {/* Modal Card */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="relative w-full max-w-md bg-[#0d131f] border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-5 z-10 text-xs"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                      <KeyRound className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white tracking-tight">Roll API Key</h3>
+                      <p className="text-xs text-slate-400">
+                        Project: <span className="text-emerald-400 font-mono font-medium">{keyData?.project_name || activeProject?.name || 'Selected Project'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsRollModalOpen(false)}
+                    disabled={rollKeyMutation.isPending}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Warning Details */}
+                <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-200/90 space-y-1.5 leading-relaxed">
+                  <div className="flex items-center gap-2 font-semibold text-amber-400 text-xs">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Existing keys will be revoked</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/80">
+                    Any existing ingestion key for <strong>"{keyData?.project_name || activeProject?.name}"</strong> will be safely retired. Live services using the old key will need the new key to continue recording traces.
+                  </p>
+                </div>
+
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  TokenTrail will generate a brand new <code className="text-emerald-400 font-mono">tt_live_...</code> key and reveal the full secret for you to copy into your environment variables.
+                </p>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsRollModalOpen(false)}
+                    disabled={rollKeyMutation.isPending}
+                    className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmRollKey}
+                    disabled={rollKeyMutation.isPending}
+                    className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-lg shadow-emerald-500/20"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${rollKeyMutation.isPending ? 'animate-spin' : ''}`} />
+                    <span>{rollKeyMutation.isPending ? 'Generating...' : 'Yes, Generate Fresh Key'}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 };
