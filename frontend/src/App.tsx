@@ -13,6 +13,7 @@ import { TracesPage } from './pages/TracesPage';
 import { TraceDetailPage } from './pages/TraceDetailPage';
 import { ModelsPage } from './pages/ModelsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { RoadmapPage } from './pages/RoadmapPage';
 import { AuthPage } from './pages/AuthPage';
 
 import { ServerWarmup } from './components/common/ServerWarmup';
@@ -47,6 +48,7 @@ const AppContent: React.FC = () => {
           <Route path="/traces" element={<TracesPage />} />
           <Route path="/traces/:traceId" element={<TraceDetailPage />} />
           <Route path="/models" element={<ModelsPage />} />
+          <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
 

@@ -7,18 +7,25 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
 
-  // 1. Authorization header: use Clerk token or dev bypass
-  let token = localStorage.getItem('tokentrail_token');
-  if (!token && typeof window !== 'undefined' && (window as unknown as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk?.session) {
+  // 1. Authorization header: prioritize live Clerk session token for concurrent multi-device support
+  let token: string | null = null;
+  if (
+    typeof window !== 'undefined' &&
+    (window as unknown as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk?.session
+  ) {
     try {
-      const clerkToken = await (window as unknown as { Clerk: { session: { getToken: () => Promise<string | null> } } }).Clerk.session.getToken();
-      if (clerkToken) {
-        token = clerkToken;
-      }
+      token = await (
+        window as unknown as { Clerk: { session: { getToken: () => Promise<string | null> } } }
+      ).Clerk.session.getToken();
     } catch {
-      // Continue to fallback
+      // fallback
     }
   }
+
+  if (!token) {
+    token = localStorage.getItem('tokentrail_token');
+  }
+
   if (!token) {
     token = 'dev_user_admin';
   }

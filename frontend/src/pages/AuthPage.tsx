@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSignIn, useSignUp } from '@clerk/clerk-react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  Activity,
   Zap,
   Layers,
   DollarSign,
@@ -15,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ThreeLogo } from '../components/common/ThreeLogo';
 
 interface AuthPageProps {
   initialMode?: 'sign-in' | 'sign-up';
@@ -192,10 +192,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialMode = 'sign-in' }) =
       {/* Top Header */}
       <header className="px-8 py-5 flex items-center justify-between border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-shadow">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Activity className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-            </div>
+          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10 overflow-hidden">
+            <ThreeLogo size={32} />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold tracking-tight text-white">TokenTrail</span>

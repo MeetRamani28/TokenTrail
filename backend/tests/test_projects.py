@@ -44,3 +44,17 @@ async def test_list_and_create_projects(client: AsyncClient, test_setup: dict[st
     rolled_data = roll_resp.json()
     assert rolled_data["api_key"].startswith("tt_live_")
     assert rolled_data["key_prefix"].startswith("tt_live_")
+
+    # 6. Rename project (PATCH)
+    patch_resp = await client.patch(
+        f"/api/projects/{new_proj['id']}",
+        json={"name": "Nexus RAG Production"},
+        headers=headers,
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["name"] == "Nexus RAG Production"
+
+    # 7. Delete project (DELETE)
+    del_resp = await client.delete(f"/api/projects/{new_proj['id']}", headers=headers)
+    assert del_resp.status_code == 200
+    assert del_resp.json()["status"] == "ok"

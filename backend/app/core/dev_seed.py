@@ -51,6 +51,10 @@ async def seed_dev_defaults() -> None:
             ("groq", "llama-3.3-70b-versatile", 0.59, 0.79),
             ("groq", "mixtral-8x7b-32768", 0.24, 0.24),
             ("groq", "gemma2-9b-it", 0.20, 0.20),
+            ("groq", "openai/gpt-oss-20b", 0.20, 0.40),
+            ("groq", "llama-3.1-8b-instant", 0.05, 0.08),
+            ("openai", "gpt-4o-mini", 0.15, 0.60),
+            ("openai", "gpt-4o", 2.50, 10.00),
         ]
         for provider, model, input_rate, output_rate in default_prices:
             price_res = await session.execute(

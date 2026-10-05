@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.clerk_auth import AuthContext, get_current_auth
 from app.core.db import get_db
 from app.models.models import ApiKey, Project
-from app.schemas.project import ProjectCreate, ProjectListItem, ProjectResponse
+from app.schemas.project import ProjectCreate, ProjectListItem, ProjectResponse, ProjectUpdate
 from app.services.api_key import generate_api_key
 
 logger = logging.getLogger(__name__)
@@ -178,3 +178,71 @@ async def roll_project_key(
         "api_key": raw_key,
         "key_prefix": key_prefix,
     }
+
+
+@router.patch("/{project_id}", response_model=ProjectListItem)
+async def update_project(
+    project_id: str,
+    payload: ProjectUpdate,
+    auth: Annotated[AuthContext, Depends(get_current_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ProjectListItem:
+    """Rename a project belonging to the authenticated user."""
+    stmt = (
+        select(Project)
+        .options(selectinload(Project.api_keys))
+        .where(Project.id == project_id, Project.owner_user_id == auth.user.id)
+    )
+    res = await db.execute(stmt)
+    proj = res.scalar_one_or_none()
+    if not proj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found",
+        )
+
+    proj.name = payload.name.strip()
+    await db.commit()
+    await db.refresh(proj)
+
+    active_key = next((k for k in proj.api_keys if k.revoked_at is None), None)
+    return ProjectListItem(
+        id=proj.id,
+        name=proj.name,
+        retention_days=proj.retention_days,
+        created_at=proj.created_at,
+        key_prefix=active_key.key_prefix if active_key else None,
+    )
+
+
+@router.delete("/{project_id}", status_code=status.HTTP_200_OK)
+async def delete_project(
+    project_id: str,
+    auth: Annotated[AuthContext, Depends(get_current_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Delete a project and its associated API keys, traces, and spans."""
+    count_stmt = select(Project).where(Project.owner_user_id == auth.user.id)
+    count_res = await db.execute(count_stmt)
+    user_projects = count_res.scalars().all()
+    if len(user_projects) <= 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your only project. Create another project first.",
+        )
+
+    stmt = select(Project).where(Project.id == project_id, Project.owner_user_id == auth.user.id)
+    res = await db.execute(stmt)
+    proj = res.scalar_one_or_none()
+    if not proj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found",
+        )
+
+    proj_name = proj.name
+    await db.delete(proj)
+    await db.commit()
+
+    logger.info("Deleted project '%s' (%s) for user %s", proj_name, project_id, auth.user.id)
+    return {"status": "ok", "message": f"Project '{proj_name}' deleted successfully"}

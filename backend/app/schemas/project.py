@@ -10,6 +10,10 @@ class ProjectCreate(BaseModel):
     )
 
 
+class ProjectUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128, description="Updated project name")
+
+
 class ProjectResponse(BaseModel):
     id: str
     name: str
