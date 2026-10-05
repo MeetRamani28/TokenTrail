@@ -42,19 +42,19 @@ def verify_clerk_token(token: str) -> str:
 
     In development/test environments, supports test tokens when live Clerk is not configured.
     """
-    # 1. Dev / test bypass tokens
-    if settings.is_development or settings.is_test:
+    # 1. Dev / test / demo bypass tokens
+    if not settings.CLERK_PUBLISHABLE_KEY or settings.is_development or settings.is_test:
         if token == "test_token" or token.startswith("test_user_"):
             return "user_clerk_test_123"
-        if token.startswith("dev_user_") or token.startswith("clerk_"):
+        if token.startswith("dev_user_") or token.startswith("clerk_") or token.startswith("demo_"):
             return token
         if token == "user_2_alice":
             return "clerk_alice"
         if token == "user_2_bob":
             return "clerk_bob"
 
-    # 2. In dev/test with unconfigured Clerk keys, allow mock inspection
-    if (settings.is_development or settings.is_test) and not settings.CLERK_PUBLISHABLE_KEY:
+    # 2. When Clerk is unconfigured, allow mock inspection or demo fallback
+    if not settings.CLERK_PUBLISHABLE_KEY:
         try:
             unverified = jwt.decode(token, options={"verify_signature": False})
             sub = unverified.get("sub")
@@ -62,6 +62,7 @@ def verify_clerk_token(token: str) -> str:
                 return str(sub)
         except Exception:
             pass
+        return "dev_user_admin"
 
     # 3. Production / Live Clerk JWKS verification
     jwk_client = get_jwk_client()
@@ -105,9 +106,9 @@ async def get_current_auth(
     and returns the authenticated user and active project.
     """
     if not credentials or not credentials.credentials:
-        # In development mode, allow anonymous fallback if configured
-        if settings.is_development and not settings.CLERK_PUBLISHABLE_KEY:
-            clerk_user_id = "dev_default_user"
+        # If Clerk is unconfigured, allow demo fallback
+        if not settings.CLERK_PUBLISHABLE_KEY or settings.is_development:
+            clerk_user_id = "dev_user_admin"
         else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

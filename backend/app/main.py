@@ -21,11 +21,11 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup actions
-    if settings.is_development:
+    if not settings.CLERK_PUBLISHABLE_KEY or settings.is_development:
         try:
             await seed_dev_defaults()
         except Exception as e:
-            logger.warning("Dev auto-seeding skipped: %s", e)
+            logger.warning("Default auto-seeding skipped: %s", e)
     yield
     # Shutdown actions
 
