@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import { Toaster } from 'sonner';
-import { ClerkProvider } from '@clerk/clerk-react';
+import { AuthenticateWithRedirectCallback, ClerkProvider } from '@clerk/clerk-react';
 
 import { store } from './store';
 import { AppLayout } from './components/layout/AppLayout';
@@ -37,8 +37,9 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
 
         {/* Branded Auth routes */}
-        <Route path="/sign-in/*" element={<AuthPage mode="sign-in" />} />
-        <Route path="/sign-up/*" element={<AuthPage mode="sign-up" />} />
+        <Route path="/sign-in" element={<AuthPage initialMode="sign-in" />} />
+        <Route path="/sign-up" element={<AuthPage initialMode="sign-up" />} />
+        <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
 
         {/* Protected Dashboard routes */}
         <Route element={<AppLayout />}>

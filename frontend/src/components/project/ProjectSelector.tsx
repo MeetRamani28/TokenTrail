@@ -1,12 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, Check, Plus, FolderKanban, X, Copy, CheckCheck, Loader2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Check,
+  Plus,
+  FolderKanban,
+  X,
+  Copy,
+  CheckCheck,
+  Loader2,
+  Sparkles,
+} from 'lucide-react';
 import { useProjects, useCreateProject } from '../../api/queries';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { setSelectedProjectId } from '../../store/uiSlice';
 import type { ProjectItem, ProjectCreated } from '../../types';
 import { toast } from 'sonner';
 
 export const ProjectSelector: React.FC = () => {
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
+  const selectedProjectId = useAppSelector((state) => state.ui.selectedProjectId);
+
   const { data: projects = [], isLoading } = useProjects();
   const createProjectMutation = useCreateProject();
 
@@ -20,22 +36,19 @@ export const ProjectSelector: React.FC = () => {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Active project ID stored in localStorage
-  const [activeProjectId, setActiveProjectId] = useState<string>(() => {
-    return localStorage.getItem('tokentrail_project_id') || '';
-  });
-
   // Resolve active project
   const activeProject: ProjectItem | undefined =
-    projects.find((p) => p.id === activeProjectId) || projects[0];
+    projects.find((p) => p.id === selectedProjectId) || projects[0];
 
-  // Sync active project id if not explicitly set
+  // Auto-sync Redux if not initialized or invalid
   useEffect(() => {
-    if (activeProject && !activeProjectId) {
-      setActiveProjectId(activeProject.id);
-      localStorage.setItem('tokentrail_project_id', activeProject.id);
+    if (projects.length > 0) {
+      if (!selectedProjectId || !projects.some((p) => p.id === selectedProjectId)) {
+        const defaultProj = projects[0];
+        dispatch(setSelectedProjectId(defaultProj.id));
+      }
     }
-  }, [activeProject, activeProjectId]);
+  }, [projects, selectedProjectId, dispatch]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -49,15 +62,15 @@ export const ProjectSelector: React.FC = () => {
   }, []);
 
   const handleSelectProject = (project: ProjectItem) => {
-    setActiveProjectId(project.id);
-    localStorage.setItem('tokentrail_project_id', project.id);
+    dispatch(setSelectedProjectId(project.id));
     setIsOpen(false);
-    toast.success(`Switched to "${project.name}"`);
-    // Invalidate telemetry queries to reload with newly selected project
+    toast.success(`Active project: "${project.name}"`);
+
+    // Invalidate and refetch all project-scoped queries
     queryClient.invalidateQueries({ queryKey: ['overview'] });
     queryClient.invalidateQueries({ queryKey: ['traces'] });
     queryClient.invalidateQueries({ queryKey: ['timeseries'] });
-    queryClient.invalidateQueries({ queryKey: ['models-usage'] });
+    queryClient.invalidateQueries({ queryKey: ['models'] });
     queryClient.invalidateQueries({ queryKey: ['project-key'] });
   };
 
@@ -75,17 +88,16 @@ export const ProjectSelector: React.FC = () => {
       });
 
       setCreatedProject(created);
-      setActiveProjectId(created.id);
-      localStorage.setItem('tokentrail_project_id', created.id);
+      dispatch(setSelectedProjectId(created.id));
       setProjectName('');
       setRetentionDays(30);
 
-      // Invalidate queries so dashboard reflects new project
+      // Invalidate queries so dashboard reflects newly selected project immediately
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['overview'] });
       queryClient.invalidateQueries({ queryKey: ['traces'] });
       queryClient.invalidateQueries({ queryKey: ['timeseries'] });
-      queryClient.invalidateQueries({ queryKey: ['models-usage'] });
+      queryClient.invalidateQueries({ queryKey: ['models'] });
       queryClient.invalidateQueries({ queryKey: ['project-key'] });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create project');
@@ -99,20 +111,155 @@ export const ProjectSelector: React.FC = () => {
     setTimeout(() => setCopiedKey(false), 2500);
   };
 
+  // Render modal in document.body via Portal to prevent any clipping from parent overflow or backdrop-blur
+  const renderModal = () => {
+    if (!isModalOpen) return null;
+
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <FolderKanban className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Create New Project</h3>
+                <p className="text-xs text-slate-400">Isolate traces, costs, and API keys</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                setCreatedProject(null);
+              }}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {createdProject ? (
+            /* Success State: Show New API Key */
+            <div className="space-y-4 py-1">
+              <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-xs text-emerald-200 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  Project <strong>{createdProject.name}</strong> created and activated!
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-200">
+                  Telemetry Ingestion Key (Copy now; won't be shown again in full):
+                </label>
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between font-mono text-xs text-emerald-400">
+                  <span className="truncate pr-2 select-all font-semibold">{createdProject.api_key}</span>
+                  <button
+                    onClick={() => handleCopyKey(createdProject.api_key)}
+                    className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-200 hover:text-white transition-colors shrink-0"
+                    title="Copy Key"
+                  >
+                    {copiedKey ? (
+                      <CheckCheck className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-300 space-y-1.5 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 font-mono">
+                <p className="text-slate-400 text-[11px]"># Use in your live project (e.g. Nexus RAG):</p>
+                <p className="text-emerald-400">export TOKENTRAIL_API_KEY="{createdProject.api_key}"</p>
+                <p className="text-emerald-400">export TOKENTRAIL_ENDPOINT="{import.meta.env.VITE_API_URL || window.location.origin}"</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setCreatedProject(null);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-emerald-500/20"
+              >
+                Go to Project Dashboard
+              </button>
+            </div>
+          ) : (
+            /* Project Creation Form */
+            <form onSubmit={handleCreateProject} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-200">Project Name *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g. nexus-rag, customer-support-agent, chatbot-v2"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-200">
+                  Data Retention (Days)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={retentionDays}
+                  onChange={(e) => setRetentionDays(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Traces older than this retention period will be automatically pruned.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createProjectMutation.isPending}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors disabled:opacity-50 shadow-md shadow-emerald-500/20"
+                >
+                  {createProjectMutation.isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>Create Project</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs text-slate-200 transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-xs text-slate-200 transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
       >
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <FolderKanban className="w-3.5 h-3.5 text-slate-400" />
-        <span className="font-semibold text-slate-100 max-w-[140px] truncate">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+        <FolderKanban className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <span className="font-semibold text-white max-w-[180px] truncate">
           {isLoading ? 'Loading...' : activeProject?.name || 'Default Project'}
         </span>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -120,27 +267,27 @@ export const ProjectSelector: React.FC = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-64 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-800 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="absolute left-0 mt-2 w-64 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Switch Project
           </div>
 
-          <div className="max-h-56 overflow-y-auto divide-y divide-slate-800/40">
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-800/60">
             {projects.map((proj) => {
-              const isSelected = proj.id === (activeProject?.id || activeProjectId);
+              const isSelected = proj.id === (activeProject?.id || selectedProjectId);
               return (
                 <button
                   key={proj.id}
                   onClick={() => handleSelectProject(proj)}
                   className={`w-full flex items-center justify-between px-3 py-2 text-left text-xs transition-colors ${
                     isSelected
-                      ? 'bg-emerald-500/10 text-emerald-400 font-medium'
-                      : 'text-slate-300 hover:bg-slate-800/60'
+                      ? 'bg-emerald-500/15 text-emerald-300 font-semibold'
+                      : 'text-slate-300 hover:bg-slate-800'
                   }`}
                 >
                   <div className="flex flex-col min-w-0 pr-2">
-                    <span className="truncate">{proj.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="truncate text-white font-medium">{proj.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
                       {proj.key_prefix ? `${proj.key_prefix}...` : 'No API key'}
                     </span>
                   </div>
@@ -150,7 +297,7 @@ export const ProjectSelector: React.FC = () => {
             })}
           </div>
 
-          <div className="border-t border-slate-800/80 my-1" />
+          <div className="border-t border-slate-800 my-1" />
 
           {/* Create Project Button */}
           <button
@@ -158,7 +305,7 @@ export const ProjectSelector: React.FC = () => {
               setIsOpen(false);
               setIsModalOpen(true);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-emerald-400 hover:bg-emerald-500/10 font-medium transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-emerald-400 hover:bg-emerald-500/10 font-semibold transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Project</span>
@@ -166,126 +313,8 @@ export const ProjectSelector: React.FC = () => {
         </div>
       )}
 
-      {/* Create Project Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <FolderKanban className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-semibold text-white">Create New Project</h3>
-              </div>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setCreatedProject(null);
-                }}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {createdProject ? (
-              /* Success State: Show New API Key */
-              <div className="space-y-4 py-2">
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300">
-                  🎉 Project <strong>{createdProject.name}</strong> created successfully!
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-300 font-medium">
-                    Telemetry Ingestion Key (Copy now; won't be shown again in full):
-                  </label>
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between font-mono text-xs text-emerald-400">
-                    <span className="truncate pr-2">{createdProject.api_key}</span>
-                    <button
-                      onClick={() => handleCopyKey(createdProject.api_key)}
-                      className="p-1 text-slate-400 hover:text-white transition-colors shrink-0"
-                    >
-                      {copiedKey ? (
-                        <CheckCheck className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-slate-400 space-y-1 bg-slate-950/60 p-3 rounded-lg border border-slate-800 font-mono">
-                  <p className="text-slate-300"># In your live application (e.g. Nexus RAG):</p>
-                  <p className="text-emerald-400 font-semibold">export TOKENTRAIL_API_KEY="{createdProject.api_key}"</p>
-                  <p className="text-emerald-400 font-semibold">export TOKENTRAIL_ENDPOINT="{window.location.origin}"</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setCreatedProject(null);
-                  }}
-                  className="w-full py-2 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-xs transition-colors"
-                >
-                  Done & Switch to Project
-                </button>
-              </div>
-            ) : (
-              /* Form State */
-              <form onSubmit={handleCreateProject} className="space-y-4">
-                <p className="text-xs text-slate-400">
-                  Traces, tokens, cost calculations, and alert rules will be completely isolated
-                  within this project.
-                </p>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">Project Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. nexus-rag, support-agent, chatbot-v2"
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300">
-                    Trace Retention (Days)
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={retentionDays}
-                    onChange={(e) => setRetentionDays(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createProjectMutation.isPending}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-xs transition-colors disabled:opacity-50"
-                  >
-                    {createProjectMutation.isPending && (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    )}
-                    <span>Create Project</span>
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Centered Modal in Portal */}
+      {renderModal()}
     </div>
   );
 };

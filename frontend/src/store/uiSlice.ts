@@ -12,9 +12,12 @@ interface UIState {
   activeTraceId: string | null;
 }
 
+const initialProjectId =
+  typeof window !== 'undefined' ? localStorage.getItem('tokentrail_project_id') : null;
+
 const initialState: UIState = {
   dateRange: '24h',
-  selectedProjectId: null,
+  selectedProjectId: initialProjectId,
   searchQuery: '',
   statusFilter: 'all',
   modelFilter: 'all',
@@ -30,6 +33,13 @@ export const uiSlice = createSlice({
     },
     setSelectedProjectId: (state, action: PayloadAction<string | null>) => {
       state.selectedProjectId = action.payload;
+      if (typeof window !== 'undefined') {
+        if (action.payload) {
+          localStorage.setItem('tokentrail_project_id', action.payload);
+        } else {
+          localStorage.removeItem('tokentrail_project_id');
+        }
+      }
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
