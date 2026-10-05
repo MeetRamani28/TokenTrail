@@ -13,6 +13,8 @@ import { TraceDetailPage } from './pages/TraceDetailPage';
 import { ModelsPage } from './pages/ModelsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
+import { ServerWarmup } from './components/common/ServerWarmup';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,6 +29,7 @@ export const App: React.FC = () => {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
+        <ServerWarmup />
         <BrowserRouter>
           <Routes>
             {/* Landing page with Three.js hero */}
