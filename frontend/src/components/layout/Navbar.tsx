@@ -6,8 +6,9 @@ import type { DateRangeOption } from '../../store/uiSlice';
 import { Calendar, Radio, Menu, Compass } from 'lucide-react';
 import clsx from 'clsx';
 import { ProjectSelector } from '../project/ProjectSelector';
-import { UserButton, SignedIn } from '@clerk/clerk-react';
+import { SignedIn } from '@clerk/clerk-react';
 import { ThreeLogo } from '../common/ThreeLogo';
+import { UserNavMenu } from './UserNavMenu';
 
 interface NavbarProps {
   onToggleMobileMenu?: () => void;
@@ -86,16 +87,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
           <span className="hidden sm:inline">Live Ingest</span>
         </div>
 
-        {/* Clerk User Button */}
+        {/* Custom Dark Theme User Menu (No Clerk Branding) */}
         <SignedIn>
           <div className="pl-1 sm:pl-2 border-l border-slate-800">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-7 h-7 ring-1 ring-emerald-500/40',
-                },
-              }}
-            />
+            <UserNavMenu />
           </div>
         </SignedIn>
       </div>
