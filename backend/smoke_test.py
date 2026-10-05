@@ -27,7 +27,9 @@ async def run_smoke_test() -> None:
     settings = get_settings()
     print("==================================================")
     print(f" TokenTrail Smoke Test: [{settings.APP_ENV.upper()} MODE]")
-    print(f" Target Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}")
+    print(
+        f" Target Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL}"
+    )
     print("==================================================")
 
     # 1. Test engine connectivity
@@ -110,7 +112,9 @@ async def run_smoke_test() -> None:
         fetched_trace = result.scalar_one_or_none()
         assert fetched_trace is not None, "Failed to retrieve written trace"
         assert fetched_trace.total_tokens == 150, f"Token mismatch: {fetched_trace.total_tokens}"
-        print(f"      Verified trace readback: {fetched_trace.trace_id} ({fetched_trace.total_tokens} tokens)")
+        print(
+            f"      Verified trace readback: {fetched_trace.trace_id} ({fetched_trace.total_tokens} tokens)"
+        )
 
     # 5. Clean up smoke artifacts
     print("[5/5] Cleaning up test artifacts...")
@@ -129,5 +133,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[FAILED] Smoke test encountered an error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

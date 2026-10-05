@@ -26,7 +26,7 @@ if str(BACKEND_DIR) not in sys.path:
 # Ensure production environment
 os.environ["APP_ENV"] = "production"
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 
 from app.core.db import AsyncSessionLocal, execute_upsert
 from app.models.models import Project, Span, Trace, User
@@ -155,7 +155,9 @@ async def run_throughput_and_query_benchmarks() -> None:
 
             # Timeseries
             q_t0 = time.perf_counter()
-            _ = await AnalyticsService.get_timeseries(session, project_id, metric="tokens", interval="1h", group_by="model")
+            _ = await AnalyticsService.get_timeseries(
+                session, project_id, metric="tokens", interval="1h", group_by="model"
+            )
             timeseries_times.append((time.perf_counter() - q_t0) * 1000.0)
 
             # Traces list

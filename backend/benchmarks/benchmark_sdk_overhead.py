@@ -8,7 +8,6 @@ Saves raw results to backend/benchmarks/raw/sdk_overhead.json.
 
 import json
 import math
-import os
 import platform
 import sys
 import time
@@ -94,8 +93,12 @@ def main() -> None:
     print(f"With SDK (p50):    {sdk_p50 * 1000.0:.2f} µs")
     print(f"With SDK (p99):    {sdk_p99 * 1000.0:.2f} µs")
     print("--------------------------------------------------")
-    print(f"SDK Overhead (p50): {overhead_p50:.4f} ms ({overhead_p50 * 1000.0:.1f} µs) [Target: < 0.5 ms]")
-    print(f"SDK Overhead (p99): {overhead_p99:.4f} ms ({overhead_p99 * 1000.0:.1f} µs) [Target: < 2.0 ms]")
+    print(
+        f"SDK Overhead (p50): {overhead_p50:.4f} ms ({overhead_p50 * 1000.0:.1f} µs) [Target: < 0.5 ms]"
+    )
+    print(
+        f"SDK Overhead (p99): {overhead_p99:.4f} ms ({overhead_p99 * 1000.0:.1f} µs) [Target: < 2.0 ms]"
+    )
     print("==================================================")
 
     # Save raw outputs

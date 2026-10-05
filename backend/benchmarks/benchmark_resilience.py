@@ -67,7 +67,9 @@ def test_backend_down() -> dict[str, float | int | str]:
     elapsed = time.time() - t0
 
     failed_sends = tt.failed_sends_count
-    print(f"      Calls: {total_calls}, Host Exceptions: {host_exceptions}, Sender Failures: {failed_sends}")
+    print(
+        f"      Calls: {total_calls}, Host Exceptions: {host_exceptions}, Sender Failures: {failed_sends}"
+    )
     assert host_exceptions == 0, f"Expected 0 host exceptions, got {host_exceptions}"
 
     return {
@@ -97,14 +99,16 @@ def test_queue_overflow() -> dict[str, int | str]:
         try:
             with tt.span(f"overflow_{i}", type="tool"):
                 pass
-        except Exception as e:
+        except Exception:
             host_exceptions += 1
 
     dropped = tt.dropped_spans_count
     tt.shutdown(timeout=0.1)
 
     expected_drops = total_spans - max_queue
-    print(f"      Enqueued: {total_spans}, Max Queue: {max_queue}, Dropped: {dropped}, Host Exceptions: {host_exceptions}")
+    print(
+        f"      Enqueued: {total_spans}, Max Queue: {max_queue}, Dropped: {dropped}, Host Exceptions: {host_exceptions}"
+    )
     assert host_exceptions == 0, "Host experienced an error during overflow"
     assert dropped >= expected_drops, f"Expected at least {expected_drops} drops, got {dropped}"
 
@@ -209,7 +213,9 @@ async def test_idempotency_postgres() -> dict[str, int | str]:
         await session.commit()
 
     duplicates = (t_count - 1) + (s_count - 1)
-    print(f"      Resent {resend_count} times -> Database row count: Traces={t_count}, Spans={s_count} (Duplicates={duplicates})")
+    print(
+        f"      Resent {resend_count} times -> Database row count: Traces={t_count}, Spans={s_count} (Duplicates={duplicates})"
+    )
     assert duplicates == 0, f"Expected 0 duplicates, got {duplicates}"
 
     return {
