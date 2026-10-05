@@ -44,4 +44,3 @@ async def test_list_and_create_projects(client: AsyncClient, test_setup: dict[st
     rolled_data = roll_resp.json()
     assert rolled_data["api_key"].startswith("tt_live_")
     assert rolled_data["key_prefix"].startswith("tt_live_")
-

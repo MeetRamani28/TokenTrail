@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -178,4 +178,3 @@ async def roll_project_key(
         "api_key": raw_key,
         "key_prefix": key_prefix,
     }
-

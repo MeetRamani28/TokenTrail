@@ -1,10 +1,13 @@
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=128, description="Human-readable project name")
-    retention_days: int = Field(default=30, ge=1, le=365, description="Trace retention period in days")
+    retention_days: int = Field(
+        default=30, ge=1, le=365, description="Trace retention period in days"
+    )
 
 
 class ProjectResponse(BaseModel):
