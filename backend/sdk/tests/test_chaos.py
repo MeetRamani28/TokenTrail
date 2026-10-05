@@ -6,7 +6,12 @@ from tokentrail import TokenTrail
 
 def test_queue_overflow_drop_oldest() -> None:
     """When buffer exceeds max_queue_size with drop_oldest, oldest spans are discarded."""
-    tt = TokenTrail(api_key="tt_mock", max_queue_size=5, drop_policy="drop_oldest")
+    tt = TokenTrail(
+        api_key="tt_mock",
+        max_queue_size=5,
+        drop_policy="drop_oldest",
+        flush_interval=100.0,
+    )
 
     for i in range(15):
         with tt.span(f"span_{i}"):
@@ -19,11 +24,17 @@ def test_queue_overflow_drop_oldest() -> None:
     remaining = tt.queue.get_batch(10, timeout=0.0)
     remaining_names = [s.name for s in remaining]
     assert remaining_names == [f"span_{i}" for i in range(10, 15)]
+    tt.shutdown(timeout=0.1)
 
 
 def test_queue_overflow_drop_newest() -> None:
     """When buffer exceeds max_queue_size with drop_newest, incoming spans are rejected."""
-    tt = TokenTrail(api_key="tt_mock", max_queue_size=5, drop_policy="drop_newest")
+    tt = TokenTrail(
+        api_key="tt_mock",
+        max_queue_size=5,
+        drop_policy="drop_newest",
+        flush_interval=100.0,
+    )
 
     for i in range(15):
         with tt.span(f"span_{i}"):
@@ -36,6 +47,7 @@ def test_queue_overflow_drop_newest() -> None:
     remaining = tt.queue.get_batch(10, timeout=0.0)
     remaining_names = [s.name for s in remaining]
     assert remaining_names == [f"span_{i}" for i in range(5)]
+    tt.shutdown(timeout=0.1)
 
 
 def test_backend_down_zero_host_impact() -> None:
