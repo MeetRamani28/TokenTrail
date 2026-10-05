@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import logging
 from typing import Annotated
 
@@ -131,3 +132,50 @@ async def get_or_create_project_key(
         "api_key": raw_key,
         "key_prefix": key_prefix,
     }
+
+
+@router.post("/{project_id}/roll-key")
+async def roll_project_key(
+    project_id: str,
+    auth: Annotated[AuthContext, Depends(get_current_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Revoke existing active key and generate a fresh API key for the project."""
+    stmt = (
+        select(Project)
+        .options(selectinload(Project.api_keys))
+        .where(Project.id == project_id, Project.owner_user_id == auth.user.id)
+    )
+    res = await db.execute(stmt)
+    proj = res.scalar_one_or_none()
+    if not proj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project '{project_id}' not found",
+        )
+
+    # Revoke all currently active keys for this project
+    now = datetime.now(UTC)
+    for k in proj.api_keys:
+        if k.revoked_at is None:
+            k.revoked_at = now
+
+    raw_key, key_hash, key_prefix = generate_api_key()
+    new_key = ApiKey(
+        project_id=proj.id,
+        name=f"{proj.name} Key",
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+    )
+    db.add(new_key)
+    await db.commit()
+
+    logger.info("Rolled API key for project '%s' (%s)", proj.name, proj.id)
+
+    return {
+        "project_id": proj.id,
+        "project_name": proj.name,
+        "api_key": raw_key,
+        "key_prefix": key_prefix,
+    }
+

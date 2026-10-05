@@ -37,3 +37,11 @@ async def test_list_and_create_projects(client: AsyncClient, test_setup: dict[st
     key_data = resp.json()
     assert key_data["project_name"] == "Nexus RAG Project"
     assert key_data["key_prefix"].startswith("tt_live_")
+
+    # 5. Roll key for the project
+    roll_resp = await client.post(f"/api/projects/{new_proj['id']}/roll-key", headers=headers)
+    assert roll_resp.status_code == 200
+    rolled_data = roll_resp.json()
+    assert rolled_data["api_key"].startswith("tt_live_")
+    assert rolled_data["key_prefix"].startswith("tt_live_")
+

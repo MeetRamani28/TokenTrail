@@ -190,3 +190,19 @@ export function useProjectKey(projectId?: string | null) {
   });
 }
 
+export function useRollProjectKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId: string) =>
+      apiFetch<{ project_id: string; project_name: string; key_prefix: string; api_key: string }>(
+        `/api/projects/${projectId}/roll-key`,
+        { method: 'POST' }
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['project-key', data.project_id], data);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+
