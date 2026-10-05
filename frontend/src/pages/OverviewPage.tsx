@@ -1,6 +1,8 @@
 import React from 'react';
 import { useOverview, useTimeseries } from '../api/queries';
 import { useAppSelector } from '../store';
+import { motion } from 'framer-motion';
+import { OverviewSkeleton } from '../components/common/Skeleton';
 import {
   Activity,
   Clock,
@@ -41,8 +43,17 @@ export const OverviewPage: React.FC = () => {
     });
   }, [requestsTs, costTs]);
 
+  if (overviewLoading && !overview) {
+    return <OverviewSkeleton />;
+  }
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-8 max-w-7xl mx-auto"
+    >
       {/* Page Title */}
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">System Overview</h1>
@@ -220,6 +231,6 @@ export const OverviewPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

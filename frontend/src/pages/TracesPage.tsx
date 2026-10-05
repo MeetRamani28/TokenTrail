@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useTraces } from '../api/queries';
 import { useAppSelector } from '../store';
 import {
@@ -43,7 +44,12 @@ export const TracesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-6 max-w-7xl mx-auto"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -60,7 +66,7 @@ export const TracesPage: React.FC = () => {
         <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
           <button
             onClick={() => { setStatusFilter('all'); setPage(0); }}
-            className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-md font-medium transition-all cursor-pointer ${
               statusFilter === 'all'
                 ? 'bg-slate-800 text-white'
                 : 'text-slate-400 hover:text-slate-200'
@@ -70,9 +76,9 @@ export const TracesPage: React.FC = () => {
           </button>
           <button
             onClick={() => { setStatusFilter('ok'); setPage(0); }}
-            className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-md font-medium transition-all cursor-pointer ${
               statusFilter === 'ok'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -80,9 +86,9 @@ export const TracesPage: React.FC = () => {
           </button>
           <button
             onClick={() => { setStatusFilter('error'); setPage(0); }}
-            className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-md font-medium transition-all cursor-pointer ${
               statusFilter === 'error'
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -135,11 +141,20 @@ export const TracesPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
-                    Loading telemetry traces...
-                  </td>
-                </tr>
+                [1, 2, 3, 4, 5, 6].map((i) => (
+                  <tr key={i} className="animate-pulse border-b border-slate-800/40">
+                    <td className="py-3.5 px-4"><div className="h-5 w-14 bg-slate-800/80 rounded-full" /></td>
+                    <td className="py-3.5 px-4">
+                      <div className="h-4 w-44 bg-slate-800/80 rounded mb-1.5" />
+                      <div className="h-3 w-28 bg-slate-800/50 rounded" />
+                    </td>
+                    <td className="py-3.5 px-4"><div className="h-4 w-28 bg-slate-800/70 rounded" /></td>
+                    <td className="py-3.5 px-4"><div className="h-4 w-14 bg-slate-800/70 rounded" /></td>
+                    <td className="py-3.5 px-4"><div className="h-4 w-12 bg-slate-800/70 rounded" /></td>
+                    <td className="py-3.5 px-4"><div className="h-4 w-16 bg-slate-800/70 rounded" /></td>
+                    <td className="py-3.5 px-4"><div className="h-4 w-24 bg-slate-800/70 rounded" /></td>
+                  </tr>
+                ))
               ) : data && data.traces.length > 0 ? (
                 data.traces.map((trace) => (
                   <tr
@@ -244,7 +259,7 @@ export const TracesPage: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40 hover:bg-slate-800 text-slate-300 flex items-center gap-1"
+              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40 hover:bg-slate-800 text-slate-300 flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Previous</span>
@@ -252,7 +267,7 @@ export const TracesPage: React.FC = () => {
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={!data?.has_more}
-              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40 hover:bg-slate-800 text-slate-300 flex items-center gap-1"
+              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40 hover:bg-slate-800 text-slate-300 flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
             >
               <span>Next</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -260,6 +275,6 @@ export const TracesPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

@@ -35,7 +35,7 @@ export const Navbar: React.FC = () => {
               key={opt.id}
               onClick={() => dispatch(setDateRange(opt.id))}
               className={clsx(
-                'px-2.5 py-1 text-xs rounded-md font-medium transition-all',
+                'px-2.5 py-1 text-xs rounded-md font-medium transition-all cursor-pointer',
                 currentRange === opt.id
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'

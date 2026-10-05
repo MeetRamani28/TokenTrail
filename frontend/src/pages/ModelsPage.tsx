@@ -1,6 +1,8 @@
 import React from 'react';
 import { useModels } from '../api/queries';
 import { useAppSelector } from '../store';
+import { motion } from 'framer-motion';
+import { Skeleton } from '../components/common/Skeleton';
 import {
   Coins,
   Cpu,
@@ -22,7 +24,12 @@ export const ModelsPage: React.FC = () => {
     : null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-6 max-w-7xl mx-auto"
+    >
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Models & Usage</h1>
@@ -37,14 +44,23 @@ export const ModelsPage: React.FC = () => {
           <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
             <Coins className="w-6 h-6" />
           </div>
-          <div>
+          <div className="flex-1">
             <span className="text-xs text-slate-400 font-medium">Highest Spend Model</span>
-            <div className="text-base font-bold text-white font-mono mt-0.5">
-              {topCostModel ? topCostModel.model : 'None yet'}
-            </div>
-            <p className="text-xs text-emerald-400 font-mono mt-0.5">
-              {topCostModel ? `$${topCostModel.total_cost.toFixed(4)} total` : '$0.00'}
-            </p>
+            {isLoading ? (
+              <div className="mt-1 space-y-1">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3.5 w-20" />
+              </div>
+            ) : (
+              <>
+                <div className="text-base font-bold text-white font-mono mt-0.5">
+                  {topCostModel ? topCostModel.model : 'None yet'}
+                </div>
+                <p className="text-xs text-emerald-400 font-mono mt-0.5">
+                  {topCostModel ? `$${topCostModel.total_cost.toFixed(4)} total` : '$0.00'}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -52,14 +68,23 @@ export const ModelsPage: React.FC = () => {
           <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
             <Zap className="w-6 h-6" />
           </div>
-          <div>
+          <div className="flex-1">
             <span className="text-xs text-slate-400 font-medium">Most Invoked Model</span>
-            <div className="text-base font-bold text-white font-mono mt-0.5">
-              {topCalledModel ? topCalledModel.model : 'None yet'}
-            </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
-              {topCalledModel ? `${topCalledModel.total_calls.toLocaleString()} requests` : '0 requests'}
-            </p>
+            {isLoading ? (
+              <div className="mt-1 space-y-1">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3.5 w-24" />
+              </div>
+            ) : (
+              <>
+                <div className="text-base font-bold text-white font-mono mt-0.5">
+                  {topCalledModel ? topCalledModel.model : 'None yet'}
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  {topCalledModel ? `${topCalledModel.total_calls.toLocaleString()} requests` : '0 requests'}
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -82,11 +107,18 @@ export const ModelsPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
-                    Loading model statistics...
-                  </td>
-                </tr>
+                [1, 2, 3].map((i) => (
+                  <tr key={i} className="border-b border-slate-800/40">
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-36" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-12 ml-auto" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                    <td className="py-3.5 px-4"><Skeleton className="h-4 w-14 ml-auto" /></td>
+                  </tr>
+                ))
               ) : models && models.length > 0 ? (
                 models.map((m) => (
                   <tr key={m.model} className="hover:bg-slate-800/40 transition-colors">
@@ -130,6 +162,6 @@ export const ModelsPage: React.FC = () => {
           </table>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
