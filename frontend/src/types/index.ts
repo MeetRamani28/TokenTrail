@@ -101,3 +101,20 @@ export interface ModelPrice {
   effective_from: string;
   currency: string;
 }
+
+export interface ProjectItem {
+  id: string;
+  name: string;
+  retention_days: number;
+  created_at: string;
+  key_prefix?: string | null;
+}
+
+export interface ProjectCreated {
+  id: string;
+  name: string;
+  retention_days: number;
+  created_at: string;
+  api_key: string;
+  key_prefix: string;
+}

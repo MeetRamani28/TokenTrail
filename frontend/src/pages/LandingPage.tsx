@@ -31,8 +31,14 @@ export const LandingPage: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <Link
+            to="/sign-in"
+            className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-2 py-1"
+          >
+            Sign In
+          </Link>
+          <Link
             to="/overview"
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2 font-semibold"
           >
             <span>Launch Dashboard</span>
             <ArrowRight className="w-4 h-4" />

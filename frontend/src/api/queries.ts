@@ -7,6 +7,8 @@ import type {
   TimeseriesData,
   TraceDetail,
   TraceListResponse,
+  ProjectItem,
+  ProjectCreated,
 } from '../types';
 import type { DateRangeOption } from '../store/uiSlice';
 
@@ -158,3 +160,33 @@ export function useDeletePrice() {
     },
   });
 }
+
+export function useProjects() {
+  return useQuery({
+    queryKey: ['projects'],
+    queryFn: () => apiFetch<ProjectItem[]>('/api/projects'),
+  });
+}
+
+export function useCreateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { name: string; retention_days?: number }) =>
+      apiFetch<ProjectCreated>('/api/projects', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+export function useProjectKey(projectId?: string | null) {
+  return useQuery({
+    queryKey: ['project-key', projectId],
+    queryFn: () => apiFetch<{ project_id: string; project_name: string; key_prefix: string; api_key?: string }>(`/api/projects/${projectId}/key`),
+    enabled: !!projectId,
+  });
+}
+

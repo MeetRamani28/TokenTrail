@@ -11,6 +11,7 @@ from app.api.v1.analytics import router as analytics_router
 from app.api.v1.ingest import router as ingest_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.prices import router as prices_router
+from app.api.v1.projects import router as projects_router
 from app.core.config import get_settings
 from app.core.dev_seed import seed_dev_defaults
 
@@ -69,6 +70,7 @@ app.include_router(prices_router)
 app.include_router(analytics_router)
 app.include_router(alerts_router)
 app.include_router(jobs_router)
+app.include_router(projects_router)
 
 
 @app.get("/healthz", tags=["Health"])

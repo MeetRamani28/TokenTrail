@@ -12,18 +12,18 @@ const dateOptions: { id: DateRangeOption; label: string }[] = [
   { id: '30d', label: '30d' },
 ];
 
+import { ProjectSelector } from '../project/ProjectSelector';
+import { UserButton, SignedIn } from '@clerk/clerk-react';
+
 export const Navbar: React.FC = () => {
   const dispatch = useAppDispatch();
   const currentRange = useAppSelector((state) => state.ui.dateRange);
 
   return (
     <header className="h-16 border-b border-slate-800 bg-slate-950/40 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
-      {/* Active Project badge */}
+      {/* Active Project Dropdown */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-medium">Default Project</span>
-        </div>
+        <ProjectSelector />
       </div>
 
       {/* Date range picker + Live status */}
@@ -50,6 +50,18 @@ export const Navbar: React.FC = () => {
           <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
           <span>Ingest Active</span>
         </div>
+
+        <SignedIn>
+          <div className="pl-1 border-l border-slate-800">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-7 h-7 ring-1 ring-emerald-500/40',
+                },
+              }}
+            />
+          </div>
+        </SignedIn>
       </div>
     </header>
   );

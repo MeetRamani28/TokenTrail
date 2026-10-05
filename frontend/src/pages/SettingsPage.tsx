@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCreatePrice, useDeletePrice, usePrices } from '../api/queries';
+import { useCreatePrice, useDeletePrice, usePrices, useProjectKey } from '../api/queries';
 import {
   Coins,
   Copy,
@@ -13,6 +13,8 @@ export const SettingsPage: React.FC = () => {
   const { data: prices, isLoading } = usePrices();
   const createPriceMutation = useCreatePrice();
   const deletePriceMutation = useDeletePrice();
+  const activeProjectId = localStorage.getItem('tokentrail_project_id');
+  const { data: keyData } = useProjectKey(activeProjectId);
 
   const [provider, setProvider] = useState('groq');
   const [model, setModel] = useState('');
@@ -205,22 +207,41 @@ export const SettingsPage: React.FC = () => {
           <h2 className="text-base font-semibold text-white">SDK Telemetry Key</h2>
         </div>
 
-        <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3 text-xs">
+        <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4 text-xs">
           <p className="text-slate-300">
-            Use your API key to send traces from the Python SDK:
+            Use your active project API key to send traces from the Python SDK or any live application:
           </p>
 
-          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-slate-300 flex items-center justify-between">
-            <code>export TOKENTRAIL_API_KEY="tt_live_dev_test_key"</code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText('export TOKENTRAIL_API_KEY="tt_live_dev_test_key"');
-                toast.success('Command copied to clipboard');
-              }}
-              className="text-slate-500 hover:text-slate-300"
-            >
-              <Copy className="w-4 h-4" />
-            </button>
+          <div className="space-y-2 font-mono">
+            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 flex items-center justify-between">
+              <code>export TOKENTRAIL_API_KEY="{keyData?.api_key || (keyData?.key_prefix ? `${keyData.key_prefix}...` : 'tt_live_dev_test_key')}"</code>
+              <button
+                onClick={() => {
+                  const keyToCopy = keyData?.api_key || keyData?.key_prefix || 'tt_live_dev_test_key';
+                  navigator.clipboard.writeText(`export TOKENTRAIL_API_KEY="${keyToCopy}"`);
+                  toast.success('API key export copied');
+                }}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+                title="Copy API key command"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 flex items-center justify-between">
+              <code>export TOKENTRAIL_ENDPOINT="{import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000')}"</code>
+              <button
+                onClick={() => {
+                  const endpoint = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+                  navigator.clipboard.writeText(`export TOKENTRAIL_ENDPOINT="${endpoint}"`);
+                  toast.success('Endpoint export copied');
+                }}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+                title="Copy endpoint command"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
