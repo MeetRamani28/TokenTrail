@@ -13,7 +13,6 @@ import {
   FileCode,
   ShieldCheck,
   ArrowRight,
-  AlertTriangle,
   Layers,
   Workflow,
   Sparkles,
@@ -351,19 +350,6 @@ export const RoadmapPage: React.FC = () => {
               >
                 4. REST / HTTP
               </button>
-            </div>
-          </div>
-
-          {/* Root Architectural Notice */}
-          <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs text-amber-200/95 leading-relaxed flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-white block font-semibold mb-0.5">
-                Why was only 1 span showing in the Execution Waterfall before?
-              </strong>
-              <span>
-                If you only instrument your single LLM call, TokenTrail will only receive 1 span. To display a full cascading Execution Waterfall (e.g., Schema Retrieval ➔ LLM Inference ➔ Security AST Guard ➔ Database Query ➔ Chart Summary), envelop your pipeline in <code className="text-amber-300 font-mono font-bold">with tt.trace(...)</code> or pass a shared <code className="text-amber-300 font-mono font-bold">trace_id</code> to each step below!
-              </span>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useOverview, useTimeseries } from '../api/queries';
+import { useOverview, useTimeseries, useModels } from '../api/queries';
 import { useAppSelector } from '../store';
 import { motion } from 'framer-motion';
 import { OverviewSkeleton } from '../components/common/Skeleton';
@@ -34,9 +34,38 @@ export const OverviewPage: React.FC = () => {
   const selectedProjectId = useAppSelector((state) => state.ui.selectedProjectId);
 
   const { data: overview, isLoading: overviewLoading } = useOverview(dateRange, selectedProjectId);
+  const { data: models } = useModels(dateRange, selectedProjectId);
   const { data: requestsTs } = useTimeseries('requests', dateRange, '1h', 'none', selectedProjectId);
   const { data: costTs } = useTimeseries('cost', dateRange, '1h', 'none', selectedProjectId);
   const { data: tokensTs } = useTimeseries('tokens', dateRange, '1h', 'none', selectedProjectId);
+
+  const modelsTotalCost = useMemo(() => {
+    return models?.reduce((acc, m) => acc + (m.total_cost || 0), 0) ?? 0;
+  }, [models]);
+
+  const effectiveTotalCost = Math.max(overview?.total_cost ?? 0, modelsTotalCost);
+
+  const effectiveP50 = useMemo(() => {
+    if (overview?.p50_latency_ms != null && overview.p50_latency_ms > 0) {
+      return overview.p50_latency_ms;
+    }
+    const nonZeroModelLat = models?.find((m) => m.avg_latency_ms != null && m.avg_latency_ms > 0)?.avg_latency_ms;
+    if (nonZeroModelLat != null && nonZeroModelLat > 0) {
+      return nonZeroModelLat;
+    }
+    return overview?.p50_latency_ms ?? null;
+  }, [overview?.p50_latency_ms, models]);
+
+  const effectiveP95 = useMemo(() => {
+    if (overview?.p95_latency_ms != null && overview.p95_latency_ms > 0) {
+      return overview.p95_latency_ms;
+    }
+    const nonZeroModelP95 = models?.find((m) => m.p95_latency_ms != null && m.p95_latency_ms > 0)?.p95_latency_ms;
+    if (nonZeroModelP95 != null && nonZeroModelP95 > 0) {
+      return nonZeroModelP95;
+    }
+    return overview?.p95_latency_ms ?? null;
+  }, [overview?.p95_latency_ms, models]);
 
   // Multi-option state for Throughput graph
   const [throughputType, setThroughputType] = useState<'area' | 'bar' | 'line'>('area');
@@ -177,13 +206,13 @@ export const OverviewPage: React.FC = () => {
             <span className="text-3xl font-extrabold text-white tracking-tight">
               {overviewLoading
                 ? '...'
-                : (overview?.total_cost ?? 0) === 0
+                : effectiveTotalCost === 0
                 ? '$0.00'
-                : (overview?.total_cost ?? 0) < 0.01
-                ? `$${(overview?.total_cost ?? 0).toFixed(5)}`
-                : (overview?.total_cost ?? 0) < 1.0
-                ? `$${(overview?.total_cost ?? 0).toFixed(4)}`
-                : `$${(overview?.total_cost ?? 0).toFixed(2)}`}
+                : effectiveTotalCost < 0.01
+                ? `$${effectiveTotalCost.toFixed(5)}`
+                : effectiveTotalCost < 1.0
+                ? `$${effectiveTotalCost.toFixed(4)}`
+                : `$${effectiveTotalCost.toFixed(2)}`}
             </span>
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
@@ -199,11 +228,17 @@ export const OverviewPage: React.FC = () => {
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-white">
-              {overview?.p50_latency_ms ? `${Math.round(overview.p50_latency_ms)}ms` : '—'}
+              {effectiveP50 != null && effectiveP50 > 0
+                ? `${Math.round(effectiveP50)}ms`
+                : effectiveP50 === 0
+                ? '0ms'
+                : '—'}
             </span>
             <span className="text-xs text-slate-500">p50</span>
             <span className="text-xl font-bold text-slate-300 ml-1">
-              {overview?.p95_latency_ms ? `${Math.round(overview.p95_latency_ms)}ms` : '—'}
+              {effectiveP95 != null && effectiveP95 > 0
+                ? `${Math.round(effectiveP95)}ms`
+                : '—'}
             </span>
             <span className="text-xs text-slate-500">p95</span>
           </div>

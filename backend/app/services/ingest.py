@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import execute_upsert
@@ -155,6 +156,31 @@ async def ingest_spans_batch(
                 "tags": trace_item.tags,
                 "metadata": trace_item.metadata,
             }
+
+    # 2.5 Query existing traces to preserve cumulative metrics
+    if trace_aggregates:
+        existing_traces_res = await session.execute(
+            select(Trace).where(Trace.trace_id.in_(list(trace_aggregates.keys())))
+        )
+        for existing in existing_traces_res.scalars().all():
+            if existing.trace_id in trace_aggregates:
+                existing_agg = trace_aggregates[existing.trace_id]
+                ex_started = ensure_utc(existing.started_at)
+                ex_ended = ensure_utc(existing.ended_at)
+                if ex_started and (
+                    existing_agg["started_at"] is None or ex_started < existing_agg["started_at"]
+                ):
+                    existing_agg["started_at"] = ex_started
+                if ex_ended and (
+                    existing_agg["ended_at"] is None or ex_ended > existing_agg["ended_at"]
+                ):
+                    existing_agg["ended_at"] = ex_ended
+                existing_agg["total_tokens"] = max(
+                    existing_agg["total_tokens"], existing.total_tokens
+                )
+                existing_agg["total_cost"] = max(existing_agg["total_cost"], existing.total_cost)
+                if existing.status == "error":
+                    existing_agg["status"] = "error"
 
     trace_records = list(trace_aggregates.values())
 

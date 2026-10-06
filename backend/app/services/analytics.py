@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any, Literal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -63,12 +63,47 @@ class AnalyticsService:
         error_count = sum(1 for t in traces if t.status == "error")
         error_rate = round((error_count / total_requests) * 100.0, 2)
 
-        latencies: list[float] = []
-        for t in traces:
-            if t.ended_at and t.started_at:
-                dur = (t.ended_at - t.started_at).total_seconds() * 1000.0
-                if dur >= 0:
-                    latencies.append(dur)
+        # Cross-aggregate directly from Spans so that costs/tokens are never lost
+        # even if traces were created prior to child span completion
+        span_agg_query = select(
+            func.coalesce(func.sum(Span.cost), 0.0),
+            func.coalesce(func.sum(Span.prompt_tokens + Span.completion_tokens), 0),
+        ).where(Span.project_id == project_id)
+        if from_time:
+            span_agg_query = span_agg_query.where(Span.started_at >= from_time)
+        if to_time:
+            span_agg_query = span_agg_query.where(Span.started_at <= to_time)
+
+        span_agg_res = await db.execute(span_agg_query)
+        span_row = span_agg_res.first()
+        spans_cost = float(span_row[0]) if span_row else 0.0
+        spans_tokens = int(span_row[1]) if span_row else 0
+
+        authoritative_cost = max(total_cost, spans_cost)
+        authoritative_tokens = max(total_tokens, spans_tokens)
+
+        # Extract positive durations from traces
+        latencies: list[float] = [
+            (t.ended_at - t.started_at).total_seconds() * 1000.0
+            for t in traces
+            if t.ended_at and t.started_at and (t.ended_at - t.started_at).total_seconds() > 0
+        ]
+
+        # If trace intervals are 0 (e.g. legacy traces), extract durations directly from spans
+        if not latencies:
+            span_dur_query = select(Span.duration_ms).where(
+                Span.project_id == project_id,
+                Span.duration_ms.is_not(None),
+                Span.duration_ms > 0,
+            )
+            if from_time:
+                span_dur_query = span_dur_query.where(Span.started_at >= from_time)
+            if to_time:
+                span_dur_query = span_dur_query.where(Span.started_at <= to_time)
+            dur_res = await db.execute(span_dur_query)
+            latencies = [
+                float(row[0]) for row in dur_res.all() if row[0] is not None and row[0] > 0
+            ]
 
         avg_latency = round(sum(latencies) / len(latencies), 2) if latencies else None
         p50_raw = calculate_percentile(latencies, 50.0) if latencies else None
@@ -79,8 +114,8 @@ class AnalyticsService:
 
         return OverviewResponse(
             total_requests=total_requests,
-            total_tokens=total_tokens,
-            total_cost=round(total_cost, 6),
+            total_tokens=authoritative_tokens,
+            total_cost=round(authoritative_cost, 6),
             error_rate=error_rate,
             avg_latency_ms=avg_latency,
             p50_latency_ms=p50_latency,

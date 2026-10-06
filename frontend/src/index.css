@@ -6,7 +6,7 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
 body {
@@ -15,4 +15,44 @@ body {
   font-family: var(--font-sans);
   background-color: #0b0f17;
   color: #f3f4f6;
+  overflow-x: hidden;
+}
+
+/* =========================================================================
+   Global Sleek Dark Scrollbar for Entire Project (Chrome, Edge, Safari, Firefox)
+   ========================================================================= */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #080d16;
+}
+
+/* Chromium (Chrome, Edge, Brave, Opera) & Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080d16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+  border: 2px solid #080d16;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #475569;
+}
+
+::-webkit-scrollbar-corner {
+  background: #080d16;
 }
