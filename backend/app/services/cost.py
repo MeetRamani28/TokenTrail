@@ -7,6 +7,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import ModelPrice
 
 
+KNOWN_FALLBACK_PRICES: dict[str, tuple[float, float]] = {
+    "openai/gpt-oss-20b": (0.20, 0.40),
+    "gpt-oss-20b": (0.20, 0.40),
+    "llama-3.3-70b-versatile": (0.59, 0.79),
+    "llama-3.1-8b-instant": (0.05, 0.08),
+    "mixtral-8x7b-32768": (0.24, 0.24),
+    "gemma2-9b-it": (0.20, 0.20),
+    "command-r": (0.50, 1.50),
+    "command-r-plus": (2.50, 10.00),
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "claude-3-5-sonnet-20241022": (3.00, 15.00),
+    "claude-3-haiku-20240307": (0.25, 1.25),
+}
+
+
 async def calculate_cost(
     session: AsyncSession,
     model: str | None,
@@ -58,8 +74,16 @@ async def calculate_cost(
         fallback_res = await session.execute(fallback_query)
         price_record = fallback_res.scalars().first()
 
-    # 3. If model pricing not found, return 0 cost flagged as estimated/unknown
+    # 3. In-memory known fallback prices if database record is missing
     if not price_record:
+        cleaned_model = norm_model.split("/")[-1] if "/" in norm_model else norm_model
+        fallback_rate = KNOWN_FALLBACK_PRICES.get(norm_model) or KNOWN_FALLBACK_PRICES.get(cleaned_model)
+        if fallback_rate:
+            in_rate, out_rate = fallback_rate
+            input_cost = (prompt_tokens * in_rate) / 1_000_000.0
+            output_cost = (completion_tokens * out_rate) / 1_000_000.0
+            total_cost = round(input_cost + output_cost, 7)
+            return total_cost, False
         return 0.0, True
 
     # 4. Accurate cost calculation per 1M tokens
@@ -71,7 +95,7 @@ async def calculate_cost(
 
 
 DEFAULT_FREE_TIER_PRICES: list[dict[str, Any]] = [
-    # Groq models (official current pricing)
+    # Groq models
     {
         "provider": "groq",
         "model": "llama-3.3-70b-versatile",
@@ -90,6 +114,24 @@ DEFAULT_FREE_TIER_PRICES: list[dict[str, Any]] = [
         "input_price_per_1m": 0.24,
         "output_price_per_1m": 0.24,
     },
+    {
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "input_price_per_1m": 0.20,
+        "output_price_per_1m": 0.40,
+    },
+    {
+        "provider": "groq",
+        "model": "gpt-oss-20b",
+        "input_price_per_1m": 0.20,
+        "output_price_per_1m": 0.40,
+    },
+    {
+        "provider": "openai",
+        "model": "openai/gpt-oss-20b",
+        "input_price_per_1m": 0.20,
+        "output_price_per_1m": 0.40,
+    },
     # Cohere models
     {
         "provider": "cohere",
@@ -106,26 +148,35 @@ DEFAULT_FREE_TIER_PRICES: list[dict[str, Any]] = [
 ]
 
 
-async def seed_default_prices_if_empty(session: AsyncSession) -> int:
-    """Seeds popular free-tier models into model_prices if empty."""
-    count_res = await session.execute(select(func.count(ModelPrice.id)))
-    count = count_res.scalar() or 0
-    if count > 0:
-        return 0
-
+async def sync_default_prices(session: AsyncSession) -> int:
+    """Synchronizes default models into model_prices if not already present."""
     inserted = 0
     now = datetime.now(UTC)
     for p in DEFAULT_FREE_TIER_PRICES:
-        price = ModelPrice(
-            provider=p["provider"],
-            model=p["model"],
-            input_price_per_1m=p["input_price_per_1m"],
-            output_price_per_1m=p["output_price_per_1m"],
-            effective_from=now,
-            currency="USD",
+        existing = await session.execute(
+            select(ModelPrice).where(
+                func.lower(ModelPrice.provider) == p["provider"].lower(),
+                func.lower(ModelPrice.model) == p["model"].lower(),
+            )
         )
-        session.add(price)
-        inserted += 1
+        if not existing.scalar_one_or_none():
+            price = ModelPrice(
+                provider=p["provider"],
+                model=p["model"],
+                input_price_per_1m=p["input_price_per_1m"],
+                output_price_per_1m=p["output_price_per_1m"],
+                effective_from=now,
+                currency="USD",
+            )
+            session.add(price)
+            inserted += 1
 
-    await session.commit()
+    if inserted > 0:
+        await session.commit()
     return inserted
+
+
+async def seed_default_prices_if_empty(session: AsyncSession) -> int:
+    """Seeds popular models into model_prices."""
+    return await sync_default_prices(session)
+

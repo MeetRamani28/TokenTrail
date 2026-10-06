@@ -21,7 +21,16 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Startup actions
+    # Startup actions: sync standard model prices
+    try:
+        from app.core.db import AsyncSessionLocal
+        from app.services.cost import sync_default_prices
+
+        async with AsyncSessionLocal() as session:
+            await sync_default_prices(session)
+    except Exception as e:
+        logger.warning("Price auto-seeding skipped: %s", e)
+
     if not settings.CLERK_PUBLISHABLE_KEY or settings.is_development:
         try:
             await seed_dev_defaults()
