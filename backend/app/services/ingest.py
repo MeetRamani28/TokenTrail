@@ -58,11 +58,7 @@ async def ingest_spans_batch(
                 duration_ms = diff
 
         # Calculate cost dynamically if not already provided
-        if (
-            cost == 0.0
-            and span_item.model
-            and (prompt_tokens > 0 or completion_tokens > 0)
-        ):
+        if cost == 0.0 and span_item.model and (prompt_tokens > 0 or completion_tokens > 0):
             computed_cost, est = await calculate_cost(
                 session=session,
                 model=span_item.model,
