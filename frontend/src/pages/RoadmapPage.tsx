@@ -14,8 +14,11 @@ import {
   ShieldCheck,
   ArrowRight,
   Layers,
-  Workflow,
-  Sparkles,
+  Zap,
+  Bot,
+  Globe,
+  FileText,
+  Terminal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '../api/client';
@@ -30,7 +33,7 @@ export const RoadmapPage: React.FC = () => {
   const { data: keyData } = useProjectKey(effectiveProjectId);
 
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'agent' | 'langgraph' | 'openai' | 'rest'>('agent');
+  const [activeTab, setActiveTab] = useState<'auto' | 'multiagent' | 'fastapi' | 'dropin' | 'manual' | 'rest'>('auto');
   const [isPinging, setIsPinging] = useState(false);
   const [pingSuccess, setPingSuccess] = useState(false);
   const [lastTraceId, setLastTraceId] = useState<string | null>(null);
@@ -219,21 +222,37 @@ export const RoadmapPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs flex items-center justify-between text-emerald-400">
-            <span className="select-all truncate pr-2">
-              pip install "git+https://github.com/MeetRamani28/TokenTrail.git#subdirectory=backend/sdk"
-            </span>
-            <button
-              type="button"
-              onClick={() => copyToClipboard('pip install "git+https://github.com/MeetRamani28/TokenTrail.git#subdirectory=backend/sdk"', 'install')}
-              className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0"
-              title="Copy Command"
-            >
-              {copiedSection === 'install' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs flex items-center justify-between text-emerald-400">
+              <span className="select-all truncate pr-2">
+                pip install "git+https://github.com/MeetRamani28/TokenTrail.git#subdirectory=backend/sdk"
+              </span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard('pip install "git+https://github.com/MeetRamani28/TokenTrail.git#subdirectory=backend/sdk"', 'install')}
+                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0"
+                title="Copy Command"
+              >
+                {copiedSection === 'install' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs flex items-center justify-between text-cyan-400">
+              <span className="select-all truncate pr-2">
+                # Or 1-File Drop-in (Zero pip needed): curl -O .../tokentrail_setup.py
+              </span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard('curl -O https://raw.githubusercontent.com/MeetRamani28/TokenTrail/main/backend/sdk/tokentrail_setup.py', 'curl-dropin')}
+                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0"
+                title="Copy Drop-in Command"
+              >
+                {copiedSection === 'curl-dropin' ? <CheckCheck className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <p className="text-[11px] text-slate-500">
-            Tip: You can also add this line directly to your project's <code className="text-slate-400">requirements.txt</code>.
+            Choose either: Install the official Python SDK via pip, or download the single-file <code className="text-slate-300">tokentrail_setup.py</code> for 100% zero-dependency drop-in tracing.
           </p>
         </motion.div>
 
@@ -317,59 +336,84 @@ export const RoadmapPage: React.FC = () => {
             <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs flex-wrap">
               <button
                 type="button"
-                onClick={() => setActiveTab('agent')}
+                onClick={() => setActiveTab('auto')}
                 className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'agent'
+                  activeTab === 'auto'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>1. ⚡ 1-Line Auto-Patch</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('multiagent')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'multiagent'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>1. Multi-Step Agent (Waterfall)</span>
+                <Bot className="w-3.5 h-3.5 text-cyan-400" />
+                <span>2. 🤖 Multi-Agent Waterfall</span>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('langgraph')}
+                onClick={() => setActiveTab('fastapi')}
                 className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'langgraph'
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Workflow className="w-3.5 h-3.5" />
-                <span>2. LangGraph State Node</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('openai')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'openai'
+                  activeTab === 'fastapi'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>3. 1-Line Client Wrapper</span>
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                <span>3. 🌐 FastAPI Middleware</span>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('rest')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  activeTab === 'rest'
+                onClick={() => setActiveTab('dropin')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'dropin'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                <span>4. 📁 1-File Standalone</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('manual')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'manual'
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                4. REST / HTTP
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <span>5. Manual Spans</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('rest')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'rest'
+                    ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5 text-slate-400" />
+                <span>6. REST API</span>
               </button>
             </div>
           </div>
 
-          {/* Tab 1: Multi-Step Agent & RAG Pipeline (Recommended) */}
-          {activeTab === 'agent' && (
+          {/* Tab 1: 1-Line Zero-Code Auto-Instrumentation */}
+          {activeTab === 'auto' && (
             <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-xs text-cyan-200/90 leading-relaxed">
-                <strong>Recommended for Multi-Step AI Agents & RAG:</strong> Wrapping your pipeline inside <code className="text-cyan-300 font-mono font-bold">with tt.trace("name"):</code> automatically binds a unified <code className="text-cyan-300 font-mono">trace_id</code> across all child spans. Every single step renders as a cascading bar in the Execution Waterfall!
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200/90 leading-relaxed">
+                <strong>⚡ Zero Code Rewrite (Recommended):</strong> Add <code className="text-amber-300 font-mono font-bold">import tokentrail.auto</code> once at the top of your app. All OpenAI, Groq, Anthropic, and LiteLLM invocations across your entire codebase are automatically intercepted, recording token counts, model names, latency, and costs in real time!
               </div>
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
@@ -377,201 +421,50 @@ export const RoadmapPage: React.FC = () => {
                   type="button"
                   onClick={() =>
                     copyToClipboard(
-`from tokentrail import TokenTrail
+`# 1. At the very top of your main entrypoint (e.g. app.py, main.py, server.py):
+import tokentrail.auto  # ⚡ Global Zero-Code Auto-Instrumentation!
 
-# 1. Initialize TokenTrail (auto-detects TOKENTRAIL_API_KEY from environment)
-tt = TokenTrail()
+# 2. Use your favorite LLM client normally — zero wrapper code needed!
+from groq import Groq
 
-def handle_user_request(user_question: str):
-    # Envelop the entire request in a trace. All child spans inherit the same trace_id!
-    with tt.trace("my_agent_pipeline"):
-        
-        # Step 1: Context / RAG Retrieval Span
-        with tt.span("context_retrieval", type="retrieval") as s1:
-            context = db.get_relevant_context(user_question)
-
-        # Step 2: LLM Synthesis Span (records model, token counts & calculated cost)
-        with tt.span("agent_llm_inference", type="llm", model="openai/gpt-oss-20b", provider="groq") as s2:
-            response = llm_client.chat.completions.create(...)
-            # Tokens are auto-tracked or can be explicitly recorded:
-            s2.set_tokens(prompt=838, completion=124)
-
-        # Step 3: Guardrail / Policy Validation Span
-        with tt.span("guardrail_validation", type="tool") as s3:
-            is_safe = guard_parser.validate(response.content)
-
-        # Step 4: Actual Tool / Database Query Execution Span
-        with tt.span("execute_tool_query", type="tool") as s4:
-            records = db.execute(response.content)
-
-        # Step 5: Formatting / Summary Mapping
-        with tt.span("format_output_summary", type="tool") as s5:
-            output = format_summary(records)
-
-    return {"records": records, "output": output}`,
-                      'code-agent'
-                    )
-                  }
-                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
-                  title="Copy Code"
-                >
-                  {copiedSection === 'code-agent' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-
-                <p className="text-slate-500"># In your agent pipeline (e.g., query_service.py, agent.py):</p>
-                <p className="text-indigo-400">from tokentrail import TokenTrail</p>
-                <p className="text-emerald-400">tt = TokenTrail()</p>
-                <br />
-                <p className="text-slate-500"># Wrap your overall workflow to create a unified trace:</p>
-                <p className="text-cyan-400">with tt.trace("my_agent_pipeline"):</p>
-                <br />
-                <p className="text-slate-500 pl-4"># 1. Retrieval Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("context_retrieval", type="retrieval"):</p>
-                <p className="text-slate-300 pl-8">context = db.get_context(question)</p>
-                <br />
-                <p className="text-slate-500 pl-4"># 2. LLM Inference Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("agent_llm_inference", type="llm", model="openai/gpt-oss-20b") as s:</p>
-                <p className="text-slate-300 pl-8">res = llm.invoke(...)</p>
-                <p className="text-emerald-400 pl-8">s.set_tokens(prompt=838, completion=124)</p>
-                <br />
-                <p className="text-slate-500 pl-4"># 3. Security Guard Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("guardrail_validation", type="tool"):</p>
-                <p className="text-slate-300 pl-8">is_safe = guard_parser.validate(res)</p>
-                <br />
-                <p className="text-slate-500 pl-4"># 4. Tool Execution Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("execute_tool_query", type="tool"):</p>
-                <p className="text-slate-300 pl-8">records = db.execute(res)</p>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 2: LangGraph / Distributed State Nodes */}
-          {activeTab === 'langgraph' && (
-            <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-200/90 leading-relaxed">
-                <strong>For Graph-Based Agent Frameworks (LangGraph, CrewAI, AutoGen):</strong> When nodes run as standalone functions across different modules, pass a shared <code className="text-indigo-300 font-mono font-bold">trace_id</code> inside the state dictionary.
-              </div>
-
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
-                <button
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(
-`import uuid
-from tokentrail import TokenTrail
-
-tt = TokenTrail()
-
-# 1. At the API endpoint, initialize state with a unique trace_id:
-trace_id = f"trace_{uuid.uuid4().hex}"
-initial_state = {
-    "question": user_question,
-    "trace_id": trace_id,
-}
-
-# 2. Inside LangGraph nodes, pass trace_id to tt.span:
-def context_retrieval_node(state):
-    trace_id = state.get("trace_id")
-    with tt.span("context_retrieval", type="retrieval", trace_id=trace_id):
-        context = fetch_context(state["question"])
-    return {"context": context}
-
-def llm_inference_node(state):
-    trace_id = state.get("trace_id")
-    with tt.span("agent_llm_inference", type="llm", trace_id=trace_id, model="openai/gpt-oss-20b", provider="groq") as s:
-        response = call_llm(state["context"], state["question"])
-        s.set_tokens(prompt=838, completion=124)
-    return {"response": response}
-
-def execute_tool_node(state):
-    trace_id = state.get("trace_id")
-    with tt.span("execute_tool_query", type="tool", trace_id=trace_id):
-        rows = execute_tool_action(state["response"])
-    return {"results": rows}`,
-                      'code-langgraph'
-                    )
-                  }
-                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
-                  title="Copy Code"
-                >
-                  {copiedSection === 'code-langgraph' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-
-                <p className="text-slate-500"># In main API endpoint (entrypoint):</p>
-                <p className="text-indigo-400">import uuid</p>
-                <p className="text-emerald-400">trace_id = f"trace_&#123;uuid.uuid4().hex&#125;"</p>
-                <p className="text-slate-300">initial_state = &#123; "question": q, "trace_id": trace_id &#125;</p>
-                <br />
-                <p className="text-slate-500"># In each node (nodes.py):</p>
-                <p className="text-cyan-400">def llm_inference_node(state):</p>
-                <p className="text-indigo-400 pl-4">with tt.span("agent_llm_inference", type="llm", trace_id=state["trace_id"], model="openai/gpt-oss-20b"):</p>
-                <p className="text-slate-300 pl-8">res = call_llm(state["question"])</p>
-                <p className="text-slate-300 pl-4">return &#123; "response": res &#125;</p>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 3: OpenAI / Groq Client Wrapper */}
-          {activeTab === 'openai' && (
-            <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-200/90 leading-relaxed">
-                <strong>Zero Code Rewrite for Direct Chats:</strong> Wrap your existing OpenAI or Groq client in 1 line. All token counts, streaming latency, model parameters, and spend are captured automatically!
-              </div>
-
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
-                <button
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(
-`from tokentrail import TokenTrail
-from openai import OpenAI
-
-# 1. Initialize TokenTrail
-tt = TokenTrail()
-
-# 2. Wrap your OpenAI or Groq client in 1 line
-client = OpenAI()
-client = tt.wrap_openai(client)
-
-# 3. Call your model as normal — telemetry streams automatically!
+client = Groq()
 response = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": "Explain vector databases in 2 sentences."}]
+    messages=[{"role": "user", "content": "Explain vector databases in 1 sentence."}]
 )
+
+# TokenTrail automatically captured latency, model, tokens, and computed cost!
 print(response.choices[0].message.content)`,
-                      'code-openai'
+                      'code-auto'
                     )
                   }
                   className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
                   title="Copy Code"
                 >
-                  {copiedSection === 'code-openai' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  {copiedSection === 'code-auto' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 </button>
 
-                <p className="text-slate-500"># In your app (e.g. main.py, chat_service.py):</p>
-                <p className="text-indigo-400">from tokentrail import TokenTrail</p>
-                <p className="text-indigo-400">from openai import OpenAI</p>
+                <p className="text-slate-500"># In your app entrypoint (main.py, app.py, server.py):</p>
+                <p className="text-amber-400 font-bold">import tokentrail.auto  <span className="text-slate-500 font-normal"># ⚡ 1-Line Zero-Code Auto-Instrumentation</span></p>
                 <br />
-                <p className="text-slate-500"># 1. Initialize TokenTrail (zero latency overhead):</p>
-                <p className="text-emerald-400">tt = TokenTrail()</p>
+                <p className="text-slate-500"># Use standard Groq, OpenAI, or Anthropic clients normally:</p>
+                <p className="text-indigo-400">from groq import Groq</p>
+                <p className="text-cyan-400">client = Groq()</p>
                 <br />
-                <p className="text-slate-500"># 2. Wrap your existing client:</p>
-                <p className="text-cyan-400">client = tt.wrap_openai(OpenAI())</p>
-                <br />
-                <p className="text-slate-500"># 3. Execute normal requests — costs & traces are auto-recorded:</p>
-                <p className="text-white">response = client.chat.completions.create(</p>
-                <p className="text-white pl-4">model="llama-3.3-70b-versatile",</p>
-                <p className="text-white pl-4">messages=[&#123;"role": "user", "content": "Hello!"&#125;]</p>
-                <p className="text-white">)</p>
+                <p className="text-slate-500"># Telemetry, token counts, and micro-cent spend stream automatically:</p>
+                <p className="text-emerald-400">response = client.chat.completions.create(</p>
+                <p className="text-slate-300 pl-4">model="llama-3.3-70b-versatile",</p>
+                <p className="text-slate-300 pl-4">messages=[&#123;"role": "user", "content": "Explain AI observability."&#125;]</p>
+                <p className="text-emerald-400">)</p>
               </div>
             </div>
           )}
 
-          {/* Tab 4: Direct HTTP Ingestion */}
-          {activeTab === 'rest' && (
+          {/* Tab 2: Multi-Agent Hierarchical Waterfall */}
+          {activeTab === 'multiagent' && (
             <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs text-purple-200/90 leading-relaxed">
-                <strong>Language Agnostic:</strong> Send multi-span batches from Node.js, Next.js, Go, or cURL directly via REST API.
+              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-xs text-cyan-200/90 leading-relaxed">
+                <strong>🤖 Multi-Agent Execution Flamegraph:</strong> For agentic pipelines (Orchestrator ➔ Specialist ➔ Tools ➔ Database). Decorate your functions with <code className="text-cyan-300 font-mono font-bold">@agent</code> and <code className="text-cyan-300 font-mono font-bold">@tool</code>. TokenTrail uses <code className="text-cyan-300 font-mono">contextvars</code> to automatically nest all child tools and LLM completions into an execution waterfall!
               </div>
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
@@ -579,8 +472,232 @@ print(response.choices[0].message.content)`,
                   type="button"
                   onClick={() =>
                     copyToClipboard(
-`curl -X POST "${endpointDisplay}/api/ingest/spans" \\
-  -H "Authorization: Bearer ${apiKeyDisplay}" \\
+`import tokentrail.auto  # Auto-captures LLM tokens & latency
+from tokentrail import agent, tool
+from groq import Groq
+
+client = Groq()
+
+# 1. Root Orchestrator Agent
+@agent(name="DataAnalystAgent", role="orchestrator")
+def run_analysis_pipeline(user_query: str):
+    # Step 1: Tool execution
+    schema = fetch_database_schema()
+    
+    # Step 2: Delegate to specialist agent (automatically nests as a child span!)
+    sql = generate_sql_query(schema, user_query)
+    
+    return {"query": sql}
+
+# 2. Tool Execution Span
+@tool(name="DatabaseSchemaFetcher")
+def fetch_database_schema():
+    # Database logic here
+    return ["users", "orders", "transactions"]
+
+# 3. Specialist Sub-Agent
+@agent(name="SQLSpecialistAgent", role="coder")
+def generate_sql_query(schema: list, prompt: str):
+    # Any LLM call made here automatically nests as a child of SQLSpecialistAgent!
+    res = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": f"Schema: {schema}. Write SQL for: {prompt}"}]
+    )
+    return res.choices[0].message.content`,
+                      'code-multiagent'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copiedSection === 'code-multiagent' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-slate-500"># In your multi-agent architecture (e.g. agents.py, pipeline.py):</p>
+                <p className="text-amber-400">import tokentrail.auto</p>
+                <p className="text-cyan-400">from tokentrail import agent, tool</p>
+                <br />
+                <p className="text-slate-500"># 1. Orchestrator Agent (Root Waterfall Span):</p>
+                <p className="text-indigo-400">@agent(name="DataAnalystAgent", role="orchestrator")</p>
+                <p className="text-slate-300">def run_pipeline(query: str):</p>
+                <p className="text-slate-400 pl-4">schema = fetch_schema()  <span className="text-slate-500"># Nests under DataAnalystAgent</span></p>
+                <p className="text-slate-400 pl-4">return generate_sql(schema, query)</p>
+                <br />
+                <p className="text-slate-500"># 2. Tool Execution Span:</p>
+                <p className="text-indigo-400">@tool(name="SchemaFetcher")</p>
+                <p className="text-slate-300">def fetch_schema():</p>
+                <p className="text-slate-400 pl-4">return db.get_tables()</p>
+                <br />
+                <p className="text-slate-500"># 3. Specialist Sub-Agent:</p>
+                <p className="text-indigo-400">@agent(name="SQLSpecialistAgent", role="coder")</p>
+                <p className="text-slate-300">def generate_sql(schema, query):</p>
+                <p className="text-emerald-400 pl-4">return client.chat.completions.create(...)  <span className="text-slate-500"># LLM nests under specialist!</span></p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: FastAPI / ASGI Middleware */}
+          {activeTab === 'fastapi' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-200/90 leading-relaxed">
+                <strong>🌐 1-Line FastAPI / Web Middleware:</strong> Simply call <code className="text-emerald-300 font-mono font-bold">use_tokentrail(app)</code>. Every incoming HTTP request becomes a root trace, and all downstream agent runs or LLM calls executed during that request automatically attach as child waterfall spans!
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`from fastapi import FastAPI
+from tokentrail.middleware import use_tokentrail
+from groq import Groq
+
+app = FastAPI()
+
+# ⚡ 1-Line Middleware Setup (attaches ASGI trace context & auto-patches LLMs)
+use_tokentrail(app)
+
+client = Groq()
+
+@app.post("/api/ask")
+async def chat_endpoint(query: str):
+    # This LLM completion automatically binds to the HTTP POST /api/ask trace!
+    res = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": query}]
+    )
+    return {"reply": res.choices[0].message.content}`,
+                      'code-fastapi'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copiedSection === 'code-fastapi' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-slate-500"># In your FastAPI server (e.g. main.py):</p>
+                <p className="text-indigo-400">from fastapi import FastAPI</p>
+                <p className="text-emerald-400">from tokentrail.middleware import use_tokentrail</p>
+                <br />
+                <p className="text-slate-300">app = FastAPI()</p>
+                <p className="text-emerald-400 font-bold">use_tokentrail(app)  <span className="text-slate-500 font-normal"># ⚡ 1-Line Middleware & Context Propagation</span></p>
+                <br />
+                <p className="text-cyan-400">@app.post("/api/ask")</p>
+                <p className="text-slate-300">async def chat(query: str):</p>
+                <p className="text-slate-500 pl-4"># LLM call automatically binds to this HTTP request trace!</p>
+                <p className="text-emerald-400 pl-4">res = client.chat.completions.create(model="llama-3.3-70b-versatile", ...)</p>
+                <p className="text-slate-300 pl-4">return &#123;"reply": res.choices[0].message.content&#125;</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: 1-File Standalone Drop-in */}
+          {activeTab === 'dropin' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-200/90 leading-relaxed">
+                <strong>📁 Standalone 1-File Drop-in:</strong> Don't want to install packages via pip? Save <code className="text-indigo-300 font-mono font-bold">tokentrail_setup.py</code> directly into your project root. Works completely standalone with pure Python standard library and zero external dependencies!
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`# In your project root, create tokentrail_setup.py.
+# Then in app.py / main.py, simply write:
+import tokentrail_setup  # ⚡ Standalone Zero-Dependency Telemetry!
+
+# Use OpenAI, Groq, or Anthropic as usual:
+from groq import Groq
+client = Groq()
+response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Hello!"}]
+)`,
+                      'code-dropin'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Usage"
+                >
+                  {copiedSection === 'code-dropin' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-slate-500"># 1. Download or save `tokentrail_setup.py` in your project root.</p>
+                <p className="text-slate-500"># 2. Add 1 line to your main entrypoint:</p>
+                <p className="text-indigo-400 font-bold">import tokentrail_setup  <span className="text-slate-500 font-normal"># ⚡ Zero dependencies needed!</span></p>
+                <br />
+                <p className="text-slate-500"># 3. Supports @agent and @tool decorators out of the box:</p>
+                <p className="text-cyan-400">from tokentrail_setup import agent, tool</p>
+                <br />
+                <p className="text-indigo-400">@agent("MyAgent")</p>
+                <p className="text-slate-300">def run():</p>
+                <p className="text-slate-400 pl-4">client.chat.completions.create(...)  <span className="text-slate-500"># Auto-tracked!</span></p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 5: Manual Context Spans */}
+          {activeTab === 'manual' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs text-purple-200/90 leading-relaxed">
+                <strong>🛠️ Explicit Context Spans:</strong> Wrap specific blocks of code manually using <code className="text-purple-300 font-mono font-bold">with tt.span("name", type="llm"):</code>.
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`from tokentrail import TokenTrail
+
+tt = TokenTrail()
+
+with tt.trace("custom_pipeline"):
+    with tt.span("db_search", type="tool"):
+        data = db.search("query")
+        
+    with tt.span("llm_call", type="llm", model="openai/gpt-oss-20b") as s:
+        res = call_llm(data)
+        s.set_tokens(prompt=420, completion=85)`,
+                      'code-manual'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copiedSection === 'code-manual' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-purple-400">from tokentrail import TokenTrail</p>
+                <p className="text-slate-300">tt = TokenTrail()</p>
+                <br />
+                <p className="text-cyan-400">with tt.trace("custom_pipeline"):</p>
+                <p className="text-indigo-400 pl-4">with tt.span("db_search", type="tool"):</p>
+                <p className="text-slate-300 pl-8">data = db.search("query")</p>
+                <br />
+                <p className="text-indigo-400 pl-4">with tt.span("llm_call", type="llm", model="openai/gpt-oss-20b") as s:</p>
+                <p className="text-slate-300 pl-8">res = call_llm(data)</p>
+                <p className="text-emerald-400 pl-8">s.set_tokens(prompt=420, completion=85)</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 6: Direct REST Ingest API */}
+          {activeTab === 'rest' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-slate-800/60 border border-slate-700/60 rounded-xl text-xs text-slate-300 leading-relaxed">
+                <strong>Language Agnostic:</strong> Send spans from Node.js, Next.js, Go, or cURL directly via REST API.
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`curl -X POST "${endpointDisplay}/v1/ingest" \\
+  -H "X-API-Key: ${apiKeyDisplay}" \\
   -H "Content-Type: application/json" \\
   -d '{
     "spans": [
@@ -588,7 +705,7 @@ print(response.choices[0].message.content)`,
         "trace_id": "trace_1001",
         "span_id": "span_1001_1",
         "name": "context_retrieval",
-        "type": "retrieval",
+        "span_type": "tool",
         "started_at": "2026-10-06T12:00:00Z",
         "ended_at": "2026-10-06T12:00:01Z",
         "duration_ms": 1000,
@@ -599,15 +716,15 @@ print(response.choices[0].message.content)`,
         "span_id": "span_1001_2",
         "parent_span_id": "span_1001_1",
         "name": "agent_llm_inference",
-        "type": "llm",
-        "started_at": "2026-10-06T12:00:01Z",
-        "ended_at": "2026-10-06T12:00:03Z",
-        "duration_ms": 2000,
-        "status": "ok",
+        "span_type": "llm",
         "model": "openai/gpt-oss-20b",
         "provider": "groq",
         "prompt_tokens": 838,
-        "completion_tokens": 124
+        "completion_tokens": 124,
+        "started_at": "2026-10-06T12:00:01Z",
+        "ended_at": "2026-10-06T12:00:03Z",
+        "duration_ms": 2000,
+        "status": "ok"
       }
     ]
   }'`,
@@ -620,8 +737,8 @@ print(response.choices[0].message.content)`,
                   {copiedSection === 'code-rest' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 </button>
 
-                <p className="text-emerald-400">curl -X POST "{endpointDisplay}/api/ingest/spans" \</p>
-                <p className="text-emerald-400 pl-4">-H "Authorization: Bearer {apiKeyDisplay}" \</p>
+                <p className="text-emerald-400">curl -X POST "{endpointDisplay}/v1/ingest" \</p>
+                <p className="text-emerald-400 pl-4">-H "X-API-Key: {apiKeyDisplay}" \</p>
                 <p className="text-emerald-400 pl-4">-H "Content-Type: application/json" \</p>
                 <p className="text-slate-400 pl-4">-d '&#123; "spans": [ ... ] &#125;'</p>
               </div>

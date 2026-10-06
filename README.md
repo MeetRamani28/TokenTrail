@@ -137,54 +137,107 @@ Isolate environments, teams, and applications with scoped API keys.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quickstart & Integration Options
 
-### 1. Python SDK Installation
-```bash
-pip install tokentrail
-```
+TokenTrail offers flexible integration paths depending on your project architecture:
 
-### 2. Basic Tracing in 4 Lines
+### Option A: ⚡ 1-Line Zero-Code Auto-Instrumentation (Recommended)
+Add one line at the top of your application entrypoint. All OpenAI, Groq, Anthropic, and LiteLLM invocations across your entire codebase are automatically intercepted:
+
 ```python
-from tokentrail import TokenTrail
+# At the top of main.py or server.py:
+import tokentrail.auto  # ⚡ Global Zero-Code Auto-Instrumentation
 
-tt = TokenTrail(
-    api_key="tt_live_your_project_key",
-    endpoint="https://tokentrail-backend.onrender.com",
+from groq import Groq
+
+# Use your LLM client normally — zero wrapper code needed!
+client = Groq()
+response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Explain AI agents in 1 line."}],
 )
-
-# Trace any function or LLM call
-with tt.span("generate_sql", type="llm", model="openai/gpt-oss-20b") as span:
-    response = call_llm(prompt)
-    span.set_tokens(prompt_tokens=150, completion_tokens=42)
+# TokenTrail automatically captured duration, tokens, model, and computed spend!
 ```
 
-### 3. Multi-Span Agent Tracing (Waterfall Example)
+---
+
+### Option B: 🤖 Multi-Agent Hierarchical Waterfall (`@agent` & `@tool`)
+In multi-agent systems (e.g. Orchestrator ➔ Specialist ➔ Tools ➔ Database), decorate your functions. TokenTrail uses `contextvars` to automatically nest child tools and LLM completions into an execution flamegraph:
+
+```python
+import tokentrail.auto
+from tokentrail import agent, tool
+
+
+@agent(name="OrchestratorAgent", role="planner")
+def run_pipeline(user_query: str):
+    schema = fetch_schema()  # Nests under OrchestratorAgent
+    return generate_sql(schema, user_query)
+
+
+@tool(name="SchemaFetcher")
+def fetch_schema():
+    return ["users", "orders", "payments"]
+
+
+@agent(name="SQLSpecialistAgent", role="coder")
+def generate_sql(schema: list, prompt: str):
+    # LLM calls inside here automatically nest under SQLSpecialistAgent!
+    return client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": f"Schema: {schema}. Write SQL: {prompt}"}],
+    )
+```
+
+---
+
+### Option C: 🌐 1-Line FastAPI / Web Middleware
+For FastAPI, Starlette, or ASGI web servers. Every incoming HTTP request becomes a root trace, and all downstream agent runs or LLM calls executed during that request automatically attach as child waterfall spans:
+
+```python
+from fastapi import FastAPI
+from tokentrail.middleware import use_tokentrail
+
+app = FastAPI()
+
+# ⚡ 1-Line Middleware & Context Propagation
+use_tokentrail(app)
+
+
+@app.post("/api/ask")
+async def chat_endpoint(query: str):
+    # Any LLM call here automatically binds to the HTTP POST /api/ask trace!
+    res = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": query}],
+    )
+    return {"reply": res.choices[0].message.content}
+```
+
+---
+
+### Option D: 📁 Standalone 1-File Drop-in (`tokentrail_setup.py`)
+Don't want to install packages via pip? Download or save [`tokentrail_setup.py`](backend/sdk/tokentrail_setup.py) directly into your project root. Works standalone with pure Python standard library and zero external dependencies:
+
+```python
+import tokentrail_setup  # ⚡ Standalone Zero-Dependency Telemetry!
+```
+
+---
+
+### Option E: 🛠️ Manual Spans (Custom Pipelines)
 ```python
 from tokentrail import TokenTrail
 
-tt = TokenTrail(api_key="tt_live_...", endpoint="http://localhost:8000")
+tt = TokenTrail(api_key="tt_live_...", endpoint="https://tokentrail-backend.onrender.com")
 
-# 1. Root Agent Chain
-with tt.span("sqlguard_pipeline", type="chain") as root_span:
-    # 2. Schema Discovery
+with tt.span("sqlguard_pipeline", type="chain"):
     with tt.span("sqlguard_schema_retrieval", type="tool"):
         schema = fetch_db_schema()
 
-    # 3. LLM SQL Generation
-    with tt.span(
-        "sqlguard_generate_sql", type="llm", model="openai/gpt-oss-20b"
-    ) as llm_span:
+    with tt.span("sqlguard_generate_sql", type="llm", model="openai/gpt-oss-20b") as s:
         sql = generate_sql(schema, user_query)
-        llm_span.set_tokens(prompt_tokens=850, completion_tokens=120)
-
-    # 4. AST Validation Guardrail
-    with tt.span("sqlguard_ast_guard_validation", type="guard"):
-        is_safe = validate_ast(sql)
-
-    # 5. Database Execution
-    with tt.span("sqlguard_execute_db_query", type="db"):
-        results = execute_query(sql)
+        s.set_tokens(prompt_tokens=850, completion_tokens=120)
 ```
 
 ### 4. Direct REST API Ingestion

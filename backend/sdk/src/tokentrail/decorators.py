@@ -63,3 +63,39 @@ def trace(
             return sync_wrapper  # type: ignore
 
     return decorator
+
+
+def agent(
+    name: str | None = None,
+    role: str | None = None,
+    tags: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> Callable[[F], F]:
+    """Decorator to trace an AI Agent's execution in a multi-agent system.
+
+    Child tools and LLM invocations executed within this agent automatically nest
+    underneath it in the waterfall timeline via contextvars.
+    """
+    meta = metadata.copy() if metadata else {}
+    if role:
+        meta["role"] = role
+    return trace(name=name, type="agent", tags=tags, metadata=meta)
+
+
+def tool(
+    name: str | None = None,
+    tags: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> Callable[[F], F]:
+    """Decorator to trace a tool or function invocation in an agentic pipeline."""
+    return trace(name=name, type="tool", tags=tags, metadata=metadata)
+
+
+def step(
+    name: str | None = None,
+    type: str = "chain",
+    tags: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> Callable[[F], F]:
+    """Decorator to trace a pipeline or chain step."""
+    return trace(name=name, type=type, tags=tags, metadata=metadata)

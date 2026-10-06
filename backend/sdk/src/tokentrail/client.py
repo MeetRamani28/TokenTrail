@@ -303,6 +303,42 @@ class TokenTrail:
             provider=provider,
         )
 
+    def agent(
+        self,
+        name: str,
+        role: str | None = None,
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> SpanContextManager:
+        """Context manager for tracing an AI agent in a multi-agent system."""
+        meta = metadata.copy() if metadata else {}
+        if role:
+            meta["role"] = role
+        return self.span(
+            name=name,
+            type="agent",
+            trace_id=trace_id,
+            parent_span_id=parent_span_id,
+            metadata=meta,
+        )
+
+    def tool(
+        self,
+        name: str,
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> SpanContextManager:
+        """Context manager for tracing a tool execution in an agentic pipeline."""
+        return self.span(
+            name=name,
+            type="tool",
+            trace_id=trace_id,
+            parent_span_id=parent_span_id,
+            metadata=metadata,
+        )
+
     def start_span(
         self,
         name: str,
