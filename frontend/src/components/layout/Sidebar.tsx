@@ -36,9 +36,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-base tracking-tight text-white">TokenTrail</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20 font-bold">
-                v0.1
-              </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">LLM Observability</p>
           </div>

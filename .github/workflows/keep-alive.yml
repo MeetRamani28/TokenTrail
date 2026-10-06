@@ -1,0 +1,22 @@
+name: Render Backend Keep-Alive (24/7)
+
+on:
+  schedule:
+    # Run every 10 minutes, 24 hours a day, 7 days a week
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive-ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping TokenTrail Render Backend Endpoint
+        run: |
+          echo "Sending automated keep-alive ping to TokenTrail Render Backend..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://tokentrail-backend.onrender.com/healthz || echo "000")
+          echo "Backend responded with HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Render Backend is warm and active."
+          else
+            echo "Wakeup ping dispatched. Status: $HTTP_STATUS"
+          fi

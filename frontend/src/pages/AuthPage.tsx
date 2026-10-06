@@ -197,9 +197,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialMode = 'sign-in' }) =
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold tracking-tight text-white">TokenTrail</span>
-            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              v0.1
-            </span>
           </div>
         </Link>
 

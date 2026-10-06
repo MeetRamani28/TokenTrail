@@ -1,11 +1,25 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class SpanIngestItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_alternative_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "started_at" not in data and "start_time" in data:
+                data["started_at"] = data["start_time"]
+            if "ended_at" not in data and "end_time" in data:
+                data["ended_at"] = data["end_time"]
+            if "prompt_tokens" not in data and "input_tokens" in data:
+                data["prompt_tokens"] = data["input_tokens"]
+            if "completion_tokens" not in data and "output_tokens" in data:
+                data["completion_tokens"] = data["output_tokens"]
+        return data
 
     span_id: str = Field(
         ..., min_length=1, max_length=64, description="Unique client-generated span identifier"

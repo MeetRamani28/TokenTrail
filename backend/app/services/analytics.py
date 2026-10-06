@@ -194,6 +194,46 @@ class AnalyticsService:
         )
         if from_time:
             trace_query = trace_query.where(Trace.started_at >= from_time)
+        # If metric is cost and not grouped by status, aggregate directly from Span table
+        # to guarantee accurate micro-cent spend reflected in timeseries
+        if metric == "cost" and group_by != "status":
+            span_cost_query = (
+                select(Span.started_at, Span.cost, Span.model)
+                .where(Span.project_id == project_id, Span.cost > 0)
+                .order_by(Span.started_at.asc())
+            )
+            if from_time:
+                span_cost_query = span_cost_query.where(Span.started_at >= from_time)
+            if to_time:
+                span_cost_query = span_cost_query.where(Span.started_at <= to_time)
+
+            span_cost_res = await db.execute(span_cost_query)
+            span_cost_rows = span_cost_res.all()
+            if span_cost_rows:
+                cost_buckets: dict[tuple[datetime, str | None], float] = defaultdict(float)
+                for s_ts, s_cost, s_model in span_cost_rows:
+                    if interval == "1h":
+                        bucket = s_ts.replace(minute=0, second=0, microsecond=0)
+                    else:
+                        bucket = s_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+                    cost_group: str | None = s_model if group_by == "model" else None
+                    cost_buckets[(bucket, cost_group)] += float(s_cost)
+
+                return TimeseriesResponse(
+                    metric=metric,
+                    interval=interval,
+                    points=[
+                        TimeseriesPoint(
+                            timestamp=b_ts,
+                            value=round(val, 6),
+                            group=b_grp,
+                        )
+                        for (b_ts, b_grp), val in sorted(
+                            cost_buckets.items(), key=lambda x: x[0][0]
+                        )
+                    ],
+                )
+
         if to_time:
             trace_query = trace_query.where(Trace.started_at <= to_time)
 

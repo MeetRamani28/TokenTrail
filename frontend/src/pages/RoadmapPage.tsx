@@ -53,9 +53,6 @@ export const RoadmapPage: React.FC = () => {
       const spanId3 = `span_${Date.now()}_3`;
       const spanId4 = `span_${Date.now()}_4`;
 
-      const endpoint = import.meta.env.VITE_API_URL || '';
-      const ingestUrl = endpoint ? `${endpoint}/api/ingest/spans` : '/api/ingest/spans';
-
       // Send 4 cascading spans to demonstrate the full multi-step execution waterfall
       const now = Date.now();
       const payload = {
@@ -64,15 +61,16 @@ export const RoadmapPage: React.FC = () => {
             trace_id: traceId,
             span_id: spanId1,
             parent_span_id: null,
-            name: 'schema_retrieval',
+            name: 'context_retrieval',
             type: 'retrieval',
-            start_time: new Date(now - 820).toISOString(),
-            end_time: new Date(now - 700).toISOString(),
+            started_at: new Date(now - 820).toISOString(),
+            ended_at: new Date(now - 700).toISOString(),
+            duration_ms: 120,
             status: 'ok',
             model: null,
-            input_tokens: 0,
-            output_tokens: 0,
-            metadata: { step: 'schema_rag', top_k: 3 },
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            metadata: { step: 'rag_vector_search', top_k: 4 },
           },
           {
             trace_id: traceId,
@@ -80,50 +78,64 @@ export const RoadmapPage: React.FC = () => {
             parent_span_id: spanId1,
             name: 'agent_llm_inference',
             type: 'llm',
-            start_time: new Date(now - 690).toISOString(),
-            end_time: new Date(now - 220).toISOString(),
+            started_at: new Date(now - 690).toISOString(),
+            ended_at: new Date(now - 220).toISOString(),
+            duration_ms: 470,
             status: 'ok',
             model: 'openai/gpt-oss-20b',
             provider: 'groq',
-            input_tokens: 838,
-            output_tokens: 124,
-            metadata: { framework: 'tokentrail_sdk', temperature: 0.0 },
+            prompt_tokens: 838,
+            completion_tokens: 124,
+            metadata: { framework: 'tokentrail_sdk', temperature: 0.1 },
           },
           {
             trace_id: traceId,
             span_id: spanId3,
             parent_span_id: spanId1,
-            name: 'ast_guard_validation',
+            name: 'guardrail_validation',
             type: 'tool',
-            start_time: new Date(now - 210).toISOString(),
-            end_time: new Date(now - 170).toISOString(),
+            started_at: new Date(now - 210).toISOString(),
+            ended_at: new Date(now - 170).toISOString(),
+            duration_ms: 40,
             status: 'ok',
             model: null,
-            input_tokens: 0,
-            output_tokens: 0,
-            metadata: { parser: 'sqlglot', read_only: true },
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            metadata: { security_check: 'passed' },
           },
           {
             trace_id: traceId,
             span_id: spanId4,
             parent_span_id: spanId1,
-            name: 'execute_db_query',
+            name: 'execute_tool_query',
             type: 'tool',
-            start_time: new Date(now - 160).toISOString(),
-            end_time: new Date(now).toISOString(),
+            started_at: new Date(now - 160).toISOString(),
+            ended_at: new Date(now).toISOString(),
+            duration_ms: 160,
             status: 'ok',
             model: null,
-            input_tokens: 0,
-            output_tokens: 0,
-            metadata: { dialect: 'postgres', rows_returned: 14 },
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            metadata: { execution: 'success', rows: 12 },
+          },
+        ],
+        traces: [
+          {
+            trace_id: traceId,
+            name: 'my_agent_pipeline',
+            status: 'ok',
           },
         ],
       };
 
-      await apiFetch(ingestUrl, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      }, effectiveProjectId);
+      await apiFetch(
+        '/api/ingest/spans',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        },
+        effectiveProjectId
+      );
 
       setPingSuccess(true);
       setLastTraceId(traceId);
@@ -577,8 +589,9 @@ print(response.choices[0].message.content)`,
         "span_id": "span_1001_1",
         "name": "context_retrieval",
         "type": "retrieval",
-        "start_time": "2026-10-06T12:00:00Z",
-        "end_time": "2026-10-06T12:00:01Z",
+        "started_at": "2026-10-06T12:00:00Z",
+        "ended_at": "2026-10-06T12:00:01Z",
+        "duration_ms": 1000,
         "status": "ok"
       },
       {
@@ -587,13 +600,14 @@ print(response.choices[0].message.content)`,
         "parent_span_id": "span_1001_1",
         "name": "agent_llm_inference",
         "type": "llm",
-        "start_time": "2026-10-06T12:00:01Z",
-        "end_time": "2026-10-06T12:00:03Z",
+        "started_at": "2026-10-06T12:00:01Z",
+        "ended_at": "2026-10-06T12:00:03Z",
+        "duration_ms": 2000,
         "status": "ok",
         "model": "openai/gpt-oss-20b",
         "provider": "groq",
-        "input_tokens": 838,
-        "output_tokens": 124
+        "prompt_tokens": 838,
+        "completion_tokens": 124
       }
     ]
   }'`,

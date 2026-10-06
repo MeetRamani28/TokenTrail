@@ -57,7 +57,9 @@ export const ModelsPage: React.FC = () => {
                   {topCostModel ? topCostModel.model : 'None yet'}
                 </div>
                 <p className="text-xs text-emerald-400 font-mono mt-0.5">
-                  {topCostModel ? `$${topCostModel.total_cost.toFixed(4)} total` : '$0.00'}
+                  {topCostModel
+                    ? `$${topCostModel.total_cost < 0.01 ? topCostModel.total_cost.toFixed(5) : topCostModel.total_cost.toFixed(4)} total`
+                    : '$0.00'}
                 </p>
               </>
             )}

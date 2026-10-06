@@ -78,16 +78,25 @@ export const OverviewPage: React.FC = () => {
   const formattedChartData = useMemo(() => {
     if (!requestsTs?.points || requestsTs.points.length === 0) return [];
 
+    const totalReqCount = requestsTs.points.reduce((acc, p) => acc + p.value, 0) || 1;
+
     const raw = requestsTs.points.map((pt, idx) => {
       const costPt = costTs?.points?.[idx];
       const tokensPt = tokensTs?.points?.[idx];
       const d = new Date(pt.timestamp);
+
+      // Smart cost attribution: use costPt if positive, otherwise allocate known spend across active request buckets
+      let bucketCost = costPt && costPt.value > 0 ? costPt.value : 0;
+      if (bucketCost === 0 && effectiveTotalCost > 0 && pt.value > 0) {
+        bucketCost = parseFloat(((pt.value / totalReqCount) * effectiveTotalCost).toFixed(6));
+      }
+
       return {
         timestamp: pt.timestamp,
         time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         requests: pt.value,
-        tokens: tokensPt ? tokensPt.value : (pt.value > 0 ? (overview?.total_tokens || 105) : 0),
-        cost: costPt ? costPt.value : 0,
+        tokens: tokensPt && tokensPt.value > 0 ? tokensPt.value : (pt.value > 0 ? (overview?.total_tokens || 105) : 0),
+        cost: bucketCost,
         cumulativeCost: 0,
       };
     });
@@ -125,11 +134,34 @@ export const OverviewPage: React.FC = () => {
     let rollingCost = 0;
     enriched.forEach((pt) => {
       rollingCost += pt.cost;
-      pt.cumulativeCost = parseFloat(rollingCost.toFixed(5));
+      pt.cumulativeCost = parseFloat(rollingCost.toFixed(6));
     });
 
     return enriched;
-  }, [requestsTs, costTs, tokensTs, overview]);
+  }, [requestsTs, costTs, tokensTs, overview, effectiveTotalCost]);
+
+  // Dynamic Y-axis scale to beautifully render micro-cent spends (e.g. $0.00044)
+  const maxCostValue = useMemo(() => {
+    const vals = formattedChartData.map((d) => (costMode === 'cumulative' ? d.cumulativeCost : d.cost) || 0);
+    return Math.max(...vals, 0);
+  }, [formattedChartData, costMode]);
+
+  const costYDomain: [number, number] = useMemo(() => {
+    if (maxCostValue <= 0) return [0, 0.001];
+    if (maxCostValue < 0.001) return [0, Number((maxCostValue * 1.35).toFixed(5))];
+    if (maxCostValue < 0.01) return [0, Number((maxCostValue * 1.25).toFixed(4))];
+    if (maxCostValue < 0.1) return [0, Number((maxCostValue * 1.2).toFixed(3))];
+    if (maxCostValue < 1.0) return [0, Number((maxCostValue * 1.15).toFixed(2))];
+    return [0, Math.ceil(maxCostValue * 1.15)];
+  }, [maxCostValue]);
+
+  const formatCostTick = (v: number) => {
+    if (v === 0) return '$0';
+    if (maxCostValue < 0.001) return `$${v.toFixed(5)}`;
+    if (maxCostValue < 0.01) return `$${v.toFixed(4)}`;
+    if (maxCostValue < 1.0) return `$${v.toFixed(3)}`;
+    return `$${v.toFixed(2)}`;
+  };
 
   if (overviewLoading && !overview) {
     return <OverviewSkeleton />;
@@ -162,12 +194,15 @@ export const OverviewPage: React.FC = () => {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Total Requests */}
-        <div className="p-5 rounded-2xl bg-[#0d131f] border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 hover:border-emerald-500/30 shadow-md shadow-black/20 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Total Requests</span>
-            <Activity className="w-4 h-4 text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Activity className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-3">
             <span className="text-3xl font-extrabold text-white tracking-tight">
@@ -181,10 +216,13 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Total Tokens */}
-        <div className="p-5 rounded-2xl bg-[#0d131f] border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 hover:border-cyan-500/30 shadow-md shadow-black/20 hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Tokens Consumed</span>
-            <Cpu className="w-4 h-4 text-cyan-400" />
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <Cpu className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-3">
             <span className="text-3xl font-extrabold text-white tracking-tight">
@@ -197,10 +235,13 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Total Cost */}
-        <div className="p-5 rounded-2xl bg-[#0d131f] border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 hover:border-amber-500/30 shadow-md shadow-black/20 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Estimated Spend</span>
-            <Coins className="w-4 h-4 text-amber-400" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Coins className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-3">
             <span className="text-3xl font-extrabold text-white tracking-tight">
@@ -221,10 +262,13 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Error Rate & Latency */}
-        <div className="p-5 rounded-2xl bg-[#0d131f] border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 hover:border-indigo-500/30 shadow-md shadow-black/20 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Latency & Reliability</span>
-            <Clock className="w-4 h-4 text-indigo-400" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Clock className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-white">
@@ -254,7 +298,7 @@ export const OverviewPage: React.FC = () => {
       {/* Multi-Option Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Request Throughput & Volume Chart */}
-        <div className="p-6 rounded-2xl bg-[#0d131f] border border-slate-800 flex flex-col justify-between">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 shadow-md shadow-black/20 flex flex-col justify-between">
           <div>
             {/* Header & Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-3 border-b border-slate-800/80">
@@ -408,7 +452,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Estimated Cost Trend Chart */}
-        <div className="p-6 rounded-2xl bg-[#0d131f] border border-slate-800 flex flex-col justify-between">
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#111827]/80 to-[#0c121e]/90 border border-slate-800/80 shadow-md shadow-black/20 flex flex-col justify-between">
           <div>
             {/* Header & Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-3 border-b border-slate-800/80">
@@ -500,12 +544,16 @@ export const OverviewPage: React.FC = () => {
                         stroke="#64748b"
                         fontSize={11}
                         tickLine={false}
-                        tickFormatter={(v) => `$${v}`}
+                        domain={costYDomain}
+                        tickFormatter={formatCostTick}
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#090d16', borderColor: '#334155', borderRadius: '10px' }}
                         labelStyle={{ color: '#f8fafc', fontWeight: 700 }}
-                        formatter={(val) => [`$${Number(val ?? 0).toFixed(5)}`, costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost']}
+                        formatter={(val) => [
+                          Number(val ?? 0) < 0.01 ? `$${Number(val ?? 0).toFixed(5)}` : `$${Number(val ?? 0).toFixed(4)}`,
+                          costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost',
+                        ]}
                       />
                       <Bar
                         dataKey={costMode === 'cumulative' ? 'cumulativeCost' : 'cost'}
@@ -521,12 +569,16 @@ export const OverviewPage: React.FC = () => {
                         stroke="#64748b"
                         fontSize={11}
                         tickLine={false}
-                        tickFormatter={(v) => `$${v}`}
+                        domain={costYDomain}
+                        tickFormatter={formatCostTick}
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#090d16', borderColor: '#334155', borderRadius: '10px' }}
                         labelStyle={{ color: '#f8fafc', fontWeight: 700 }}
-                        formatter={(val) => [`$${Number(val ?? 0).toFixed(5)}`, costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost']}
+                        formatter={(val) => [
+                          Number(val ?? 0) < 0.01 ? `$${Number(val ?? 0).toFixed(5)}` : `$${Number(val ?? 0).toFixed(4)}`,
+                          costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost',
+                        ]}
                       />
                       <Line
                         type="monotone"
@@ -551,12 +603,16 @@ export const OverviewPage: React.FC = () => {
                         stroke="#64748b"
                         fontSize={11}
                         tickLine={false}
-                        tickFormatter={(v) => `$${v}`}
+                        domain={costYDomain}
+                        tickFormatter={formatCostTick}
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#090d16', borderColor: '#334155', borderRadius: '10px' }}
                         labelStyle={{ color: '#f8fafc', fontWeight: 700 }}
-                        formatter={(val) => [`$${Number(val ?? 0).toFixed(5)}`, costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost']}
+                        formatter={(val) => [
+                          Number(val ?? 0) < 0.01 ? `$${Number(val ?? 0).toFixed(5)}` : `$${Number(val ?? 0).toFixed(4)}`,
+                          costMode === 'cumulative' ? 'Cumulative Spend' : 'Cost',
+                        ]}
                       />
                       <Area
                         type="monotone"
