@@ -108,9 +108,17 @@ class SpanContextManager:
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.__exit__(exc_type, exc_val, exc_tb)
 
+    def set_duration(self, duration_ms: float) -> None:
+        self.duration_ms = max(1.0, float(duration_ms))
+
     def _finalize(self, exc_type: Any, exc_val: Any) -> None:
+        from datetime import timedelta
+
         self.ended_at = datetime.now(UTC)
-        self.duration_ms = (time.monotonic() - self._start_time) * 1000.0
+        if self.duration_ms is None or self.duration_ms <= 0:
+            self.duration_ms = max(1.0, (time.monotonic() - self._start_time) * 1000.0)
+        else:
+            self.duration_ms = max(1.0, float(self.duration_ms))
 
         if exc_val is not None:
             self.status = "error"
@@ -119,6 +127,12 @@ class SpanContextManager:
 
         if self.started_at is None:
             self.started_at = self.ended_at
+
+        # If caller provided explicit duration, align started_at
+        if self.duration_ms and self.duration_ms > 0:
+            elapsed_ms = (self.ended_at - self.started_at).total_seconds() * 1000.0
+            if elapsed_ms < self.duration_ms * 0.5:
+                self.started_at = self.ended_at - timedelta(milliseconds=self.duration_ms)
 
         span_data = SpanData(
             span_id=self.span_id,

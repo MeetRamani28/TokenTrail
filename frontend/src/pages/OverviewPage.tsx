@@ -175,7 +175,15 @@ export const OverviewPage: React.FC = () => {
           </div>
           <div className="mt-3">
             <span className="text-3xl font-extrabold text-white tracking-tight">
-              ${overviewLoading ? '...' : (overview?.total_cost ?? 0).toFixed(4)}
+              {overviewLoading
+                ? '...'
+                : (overview?.total_cost ?? 0) === 0
+                ? '$0.00'
+                : (overview?.total_cost ?? 0) < 0.01
+                ? `$${(overview?.total_cost ?? 0).toFixed(5)}`
+                : (overview?.total_cost ?? 0) < 1.0
+                ? `$${(overview?.total_cost ?? 0).toFixed(4)}`
+                : `$${(overview?.total_cost ?? 0).toFixed(2)}`}
             </span>
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">

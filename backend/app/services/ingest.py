@@ -34,23 +34,41 @@ async def ingest_spans_batch(
         t_id = span_item.trace_id
         started = ensure_utc(span_item.started_at)
         ended = ensure_utc(span_item.ended_at)
-        tokens = span_item.prompt_tokens + span_item.completion_tokens
-        cost = span_item.cost
+
+        prompt_tokens = span_item.prompt_tokens
+        completion_tokens = span_item.completion_tokens
         is_estimated = span_item.cost_is_estimated
+
+        # Fallback token estimation if tokens were 0 but text was sent for an LLM span
+        if span_item.type == "llm" and prompt_tokens == 0 and span_item.input:
+            prompt_tokens = max(1, len(span_item.input) // 4)
+            is_estimated = True
+        if span_item.type == "llm" and completion_tokens == 0 and span_item.output:
+            completion_tokens = max(1, len(span_item.output) // 4)
+            is_estimated = True
+
+        tokens = prompt_tokens + completion_tokens
+        cost = span_item.cost
         is_error = span_item.status == "error"
+
+        duration_ms = span_item.duration_ms
+        if (duration_ms is None or duration_ms <= 0) and started and ended:
+            diff = (ended - started).total_seconds() * 1000.0
+            if diff > 0:
+                duration_ms = diff
 
         # Calculate cost dynamically if not already provided
         if (
             cost == 0.0
             and span_item.model
-            and (span_item.prompt_tokens > 0 or span_item.completion_tokens > 0)
+            and (prompt_tokens > 0 or completion_tokens > 0)
         ):
             computed_cost, est = await calculate_cost(
                 session=session,
                 model=span_item.model,
                 provider=span_item.provider,
-                prompt_tokens=span_item.prompt_tokens,
-                completion_tokens=span_item.completion_tokens,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
                 timestamp=started,
             )
             cost = computed_cost
@@ -67,15 +85,15 @@ async def ingest_spans_batch(
                 "type": span_item.type,
                 "started_at": started,
                 "ended_at": ended,
-                "duration_ms": span_item.duration_ms,
+                "duration_ms": duration_ms,
                 "ttft_ms": span_item.ttft_ms,
                 "status": span_item.status,
                 "error_type": span_item.error_type,
                 "error_message": span_item.error_message,
                 "model": span_item.model,
                 "provider": span_item.provider,
-                "prompt_tokens": span_item.prompt_tokens,
-                "completion_tokens": span_item.completion_tokens,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
                 "cost": cost,
                 "cost_is_estimated": is_estimated,
                 "input": span_item.input,

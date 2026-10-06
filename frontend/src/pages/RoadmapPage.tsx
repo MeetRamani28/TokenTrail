@@ -79,7 +79,7 @@ export const RoadmapPage: React.FC = () => {
             trace_id: traceId,
             span_id: spanId2,
             parent_span_id: spanId1,
-            name: 'sqlguard_generate_sql',
+            name: 'agent_llm_inference',
             type: 'llm',
             start_time: new Date(now - 690).toISOString(),
             end_time: new Date(now - 220).toISOString(),
@@ -204,7 +204,7 @@ export const RoadmapPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-bold text-white">Install the TokenTrail SDK</h2>
-              <p className="text-xs text-slate-400">Run in your host project repository (e.g. SQLGuard / Nexus-RAG / Chatbot)</p>
+              <p className="text-xs text-slate-400">Run in your host project repository (e.g. FastAPI / Next.js / Python Agent)</p>
             </div>
           </div>
 
@@ -270,15 +270,15 @@ export const RoadmapPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400">
             <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-              <span className="font-semibold text-white block mb-1">📍 Where does this go in SQLGuard?</span>
+              <span className="font-semibold text-white block mb-1">📍 Local Development (.env)</span>
               <p className="text-[11px] text-slate-400">
-                Inside <code className="text-slate-300 font-mono">SQLGuard/Backend/.env</code>, add both lines above.
+                Inside your project's root <code className="text-slate-300 font-mono">.env</code> file, add both lines above.
               </p>
             </div>
             <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800/80">
-              <span className="font-semibold text-white block mb-1">🚀 Where does this go on Render?</span>
+              <span className="font-semibold text-white block mb-1">🚀 Cloud Deployment (Render / Vercel)</span>
               <p className="text-[11px] text-slate-400">
-                In Render Dashboard &gt; Service &gt; Environment &gt; Add Environment Variable.
+                In your deployment dashboard &gt; Environment Variables &gt; Add these two keys.
               </p>
             </div>
           </div>
@@ -386,31 +386,31 @@ tt = TokenTrail()
 
 def handle_user_request(user_question: str):
     # Envelop the entire request in a trace. All child spans inherit the same trace_id!
-    with tt.trace("sqlguard_agent_pipeline"):
+    with tt.trace("my_agent_pipeline"):
         
-        # Step 1: Schema / RAG Retrieval Span
-        with tt.span("schema_retrieval", type="retrieval") as s1:
-            schema = db.get_relevant_schema(user_question)
+        # Step 1: Context / RAG Retrieval Span
+        with tt.span("context_retrieval", type="retrieval") as s1:
+            context = db.get_relevant_context(user_question)
 
-        # Step 2: LLM SQL Synthesis Span (records model, token counts & calculated cost)
-        with tt.span("generate_sql_llm", type="llm", model="openai/gpt-oss-20b", provider="groq") as s2:
+        # Step 2: LLM Synthesis Span (records model, token counts & calculated cost)
+        with tt.span("agent_llm_inference", type="llm", model="openai/gpt-oss-20b", provider="groq") as s2:
             response = llm_client.chat.completions.create(...)
             # Tokens are auto-tracked or can be explicitly recorded:
             s2.set_tokens(prompt=838, completion=124)
 
-        # Step 3: AST Security Guardrail Span
-        with tt.span("ast_guard_validation", type="tool") as s3:
-            is_safe = ast_parser.validate(response.sql)
+        # Step 3: Guardrail / Policy Validation Span
+        with tt.span("guardrail_validation", type="tool") as s3:
+            is_safe = guard_parser.validate(response.content)
 
-        # Step 4: Actual Database Query Execution Span
-        with tt.span("execute_db_query", type="tool") as s4:
-            records = db.execute(response.sql)
+        # Step 4: Actual Tool / Database Query Execution Span
+        with tt.span("execute_tool_query", type="tool") as s4:
+            records = db.execute(response.content)
 
-        # Step 5: Heuristic Chart & Summary Mapping
-        with tt.span("chart_mapping_summary", type="tool") as s5:
-            chart = select_chart_type(records)
+        # Step 5: Formatting / Summary Mapping
+        with tt.span("format_output_summary", type="tool") as s5:
+            output = format_summary(records)
 
-    return {"records": records, "chart": chart}`,
+    return {"records": records, "output": output}`,
                       'code-agent'
                     )
                   }
@@ -425,24 +425,24 @@ def handle_user_request(user_question: str):
                 <p className="text-emerald-400">tt = TokenTrail()</p>
                 <br />
                 <p className="text-slate-500"># Wrap your overall workflow to create a unified trace:</p>
-                <p className="text-cyan-400">with tt.trace("sqlguard_agent_pipeline"):</p>
+                <p className="text-cyan-400">with tt.trace("my_agent_pipeline"):</p>
                 <br />
                 <p className="text-slate-500 pl-4"># 1. Retrieval Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("schema_retrieval", type="retrieval"):</p>
-                <p className="text-slate-300 pl-8">schema = db.get_schema(question)</p>
+                <p className="text-indigo-400 pl-4">with tt.span("context_retrieval", type="retrieval"):</p>
+                <p className="text-slate-300 pl-8">context = db.get_context(question)</p>
                 <br />
                 <p className="text-slate-500 pl-4"># 2. LLM Inference Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("generate_sql_llm", type="llm", model="openai/gpt-oss-20b") as s:</p>
-                <p className="text-slate-300 pl-8">sql = llm.invoke(...)</p>
+                <p className="text-indigo-400 pl-4">with tt.span("agent_llm_inference", type="llm", model="openai/gpt-oss-20b") as s:</p>
+                <p className="text-slate-300 pl-8">res = llm.invoke(...)</p>
                 <p className="text-emerald-400 pl-8">s.set_tokens(prompt=838, completion=124)</p>
                 <br />
                 <p className="text-slate-500 pl-4"># 3. Security Guard Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("ast_guard_validation", type="tool"):</p>
-                <p className="text-slate-300 pl-8">is_safe = ast_parser.validate(sql)</p>
+                <p className="text-indigo-400 pl-4">with tt.span("guardrail_validation", type="tool"):</p>
+                <p className="text-slate-300 pl-8">is_safe = guard_parser.validate(res)</p>
                 <br />
-                <p className="text-slate-500 pl-4"># 4. Database Query Span</p>
-                <p className="text-indigo-400 pl-4">with tt.span("execute_db_query", type="tool"):</p>
-                <p className="text-slate-300 pl-8">records = db.execute(sql)</p>
+                <p className="text-slate-500 pl-4"># 4. Tool Execution Span</p>
+                <p className="text-indigo-400 pl-4">with tt.span("execute_tool_query", type="tool"):</p>
+                <p className="text-slate-300 pl-8">records = db.execute(res)</p>
               </div>
             </div>
           )}
@@ -472,23 +472,23 @@ initial_state = {
 }
 
 # 2. Inside LangGraph nodes, pass trace_id to tt.span:
-def schema_retrieval_node(state):
+def context_retrieval_node(state):
     trace_id = state.get("trace_id")
-    with tt.span("schema_retrieval", type="retrieval", trace_id=trace_id):
-        schema = fetch_schema(state["question"])
-    return {"schema": schema}
+    with tt.span("context_retrieval", type="retrieval", trace_id=trace_id):
+        context = fetch_context(state["question"])
+    return {"context": context}
 
-def generate_sql_node(state):
+def llm_inference_node(state):
     trace_id = state.get("trace_id")
-    with tt.span("sqlguard_generate_sql", type="llm", trace_id=trace_id, model="openai/gpt-oss-20b", provider="groq") as s:
-        response = call_llm(state["schema"], state["question"])
+    with tt.span("agent_llm_inference", type="llm", trace_id=trace_id, model="openai/gpt-oss-20b", provider="groq") as s:
+        response = call_llm(state["context"], state["question"])
         s.set_tokens(prompt=838, completion=124)
-    return {"sql_query": response}
+    return {"response": response}
 
-def execute_sql_node(state):
+def execute_tool_node(state):
     trace_id = state.get("trace_id")
-    with tt.span("execute_db_query", type="tool", trace_id=trace_id):
-        rows = execute_database_query(state["sql_query"])
+    with tt.span("execute_tool_query", type="tool", trace_id=trace_id):
+        rows = execute_tool_action(state["response"])
     return {"results": rows}`,
                       'code-langgraph'
                     )
@@ -505,10 +505,10 @@ def execute_sql_node(state):
                 <p className="text-slate-300">initial_state = &#123; "question": q, "trace_id": trace_id &#125;</p>
                 <br />
                 <p className="text-slate-500"># In each node (nodes.py):</p>
-                <p className="text-cyan-400">def generate_sql_node(state):</p>
-                <p className="text-indigo-400 pl-4">with tt.span("sqlguard_generate_sql", type="llm", trace_id=state["trace_id"], model="openai/gpt-oss-20b"):</p>
+                <p className="text-cyan-400">def llm_inference_node(state):</p>
+                <p className="text-indigo-400 pl-4">with tt.span("agent_llm_inference", type="llm", trace_id=state["trace_id"], model="openai/gpt-oss-20b"):</p>
                 <p className="text-slate-300 pl-8">res = call_llm(state["question"])</p>
-                <p className="text-slate-300 pl-4">return &#123; "sql": res &#125;</p>
+                <p className="text-slate-300 pl-4">return &#123; "response": res &#125;</p>
               </div>
             </div>
           )}
@@ -589,7 +589,7 @@ print(response.choices[0].message.content)`,
       {
         "trace_id": "trace_1001",
         "span_id": "span_1001_1",
-        "name": "schema_retrieval",
+        "name": "context_retrieval",
         "type": "retrieval",
         "start_time": "2026-10-06T12:00:00Z",
         "end_time": "2026-10-06T12:00:01Z",
@@ -599,7 +599,7 @@ print(response.choices[0].message.content)`,
         "trace_id": "trace_1001",
         "span_id": "span_1001_2",
         "parent_span_id": "span_1001_1",
-        "name": "sqlguard_generate_sql",
+        "name": "agent_llm_inference",
         "type": "llm",
         "start_time": "2026-10-06T12:00:01Z",
         "end_time": "2026-10-06T12:00:03Z",
