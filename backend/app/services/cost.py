@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import ModelPrice
 
-
 KNOWN_FALLBACK_PRICES: dict[str, tuple[float, float]] = {
     "openai/gpt-oss-20b": (0.20, 0.40),
     "gpt-oss-20b": (0.20, 0.40),
@@ -77,7 +76,9 @@ async def calculate_cost(
     # 3. In-memory known fallback prices if database record is missing
     if not price_record:
         cleaned_model = norm_model.split("/")[-1] if "/" in norm_model else norm_model
-        fallback_rate = KNOWN_FALLBACK_PRICES.get(norm_model) or KNOWN_FALLBACK_PRICES.get(cleaned_model)
+        fallback_rate = KNOWN_FALLBACK_PRICES.get(norm_model) or KNOWN_FALLBACK_PRICES.get(
+            cleaned_model
+        )
         if fallback_rate:
             in_rate, out_rate = fallback_rate
             input_cost = (prompt_tokens * in_rate) / 1_000_000.0
@@ -179,4 +180,3 @@ async def sync_default_prices(session: AsyncSession) -> int:
 async def seed_default_prices_if_empty(session: AsyncSession) -> int:
     """Seeds popular models into model_prices."""
     return await sync_default_prices(session)
-

@@ -30,6 +30,8 @@ class SpanContextManager:
         trace_id: str | None = None,
         parent_span_id: str | None = None,
         metadata: dict[str, Any] | None = None,
+        model: str | None = None,
+        provider: str | None = None,
     ) -> None:
         self.client = client
         self.name = name
@@ -46,8 +48,8 @@ class SpanContextManager:
         self.status: str = "ok"
         self.error_type: str | None = None
         self.error_message: str | None = None
-        self.model: str | None = None
-        self.provider: str | None = None
+        self.model: str | None = model
+        self.provider: str | None = provider
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.cost: float = 0.0
@@ -158,6 +160,52 @@ class SpanContextManager:
                 logger.debug("TokenTrail context cleanup error: %s", e)
 
 
+class TraceContextManager:
+    """Context manager for tracing an entire workflow, binding a shared trace_id across all nested or sequential spans."""
+
+    def __init__(
+        self,
+        client: "TokenTrail",
+        name: str = "agent_trace",
+        trace_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self.client = client
+        self.name = name
+        self.trace_id = trace_id or f"trace_{uuid.uuid4().hex}"
+        self.metadata = metadata or {}
+        self._token: Any = None
+        self._root_span: SpanContextManager | None = None
+
+    def __enter__(self) -> "TraceContextManager":
+        self._token = set_current_trace_id(self.trace_id)
+        self._root_span = self.client.span(
+            name=self.name,
+            type="agent",
+            trace_id=self.trace_id,
+            metadata=self.metadata,
+        )
+        self._root_span.__enter__()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        try:
+            if self._root_span:
+                self._root_span.__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            if self._token:
+                try:
+                    self._token.var.reset(self._token)
+                except Exception as e:
+                    logger.debug("Trace context cleanup error: %s", e)
+
+    async def __aenter__(self) -> "TraceContextManager":
+        return self.__enter__()
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.__exit__(exc_type, exc_val, exc_tb)
+
+
 class TokenTrail:
     """Main client for TokenTrail LLM observability."""
 
@@ -203,6 +251,20 @@ class TokenTrail:
             logger.debug("Custom redact function failed: %s", e)
             return "[REDACTION_ERROR]"
 
+    def trace(
+        self,
+        name: str = "agent_trace",
+        trace_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> TraceContextManager:
+        """Returns a context manager that binds a shared trace_id across all spans in the block."""
+        return TraceContextManager(
+            client=self,
+            name=name,
+            trace_id=trace_id,
+            metadata=metadata,
+        )
+
     def span(
         self,
         name: str,
@@ -210,15 +272,44 @@ class TokenTrail:
         trace_id: str | None = None,
         parent_span_id: str | None = None,
         metadata: dict[str, Any] | None = None,
+        model: str | None = None,
+        provider: str | None = None,
+        **kwargs: Any,
     ) -> SpanContextManager:
         """Returns a context manager for tracking a span."""
+        span_type = kwargs.get("type_", type)
         return SpanContextManager(
             client=self,
             name=name,
-            type_=type,
+            type_=span_type,
             trace_id=trace_id,
             parent_span_id=parent_span_id,
             metadata=metadata,
+            model=model,
+            provider=provider,
+        )
+
+    def start_span(
+        self,
+        name: str,
+        type: str = "tool",
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        model: str | None = None,
+        provider: str | None = None,
+        **kwargs: Any,
+    ) -> SpanContextManager:
+        """Alias for span()."""
+        return self.span(
+            name=name,
+            type=type,
+            trace_id=trace_id,
+            parent_span_id=parent_span_id,
+            metadata=metadata,
+            model=model,
+            provider=provider,
+            **kwargs,
         )
 
     def wrap_openai(self, client: Any) -> Any:

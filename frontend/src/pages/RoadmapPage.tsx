@@ -13,6 +13,10 @@ import {
   FileCode,
   ShieldCheck,
   ArrowRight,
+  AlertTriangle,
+  Layers,
+  Workflow,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '../api/client';
@@ -27,7 +31,7 @@ export const RoadmapPage: React.FC = () => {
   const { data: keyData } = useProjectKey(effectiveProjectId);
 
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'openai' | 'agent' | 'rest'>('openai');
+  const [activeTab, setActiveTab] = useState<'agent' | 'langgraph' | 'openai' | 'rest'>('agent');
   const [isPinging, setIsPinging] = useState(false);
   const [pingSuccess, setPingSuccess] = useState(false);
   const [lastTraceId, setLastTraceId] = useState<string | null>(null);
@@ -47,38 +51,72 @@ export const RoadmapPage: React.FC = () => {
       const traceId = `trace_${Date.now()}`;
       const spanId1 = `span_${Date.now()}_1`;
       const spanId2 = `span_${Date.now()}_2`;
+      const spanId3 = `span_${Date.now()}_3`;
+      const spanId4 = `span_${Date.now()}_4`;
 
       const endpoint = import.meta.env.VITE_API_URL || '';
       const ingestUrl = endpoint ? `${endpoint}/api/ingest/spans` : '/api/ingest/spans';
 
-      // Send 2 spans so waterfall has a multi-step cascading demo
+      // Send 4 cascading spans to demonstrate the full multi-step execution waterfall
+      const now = Date.now();
       const payload = {
         spans: [
           {
             trace_id: traceId,
             span_id: spanId1,
             parent_span_id: null,
-            name: 'agent_input_validation',
-            start_time: new Date(Date.now() - 350).toISOString(),
-            end_time: new Date(Date.now() - 250).toISOString(),
+            name: 'schema_retrieval',
+            type: 'retrieval',
+            start_time: new Date(now - 820).toISOString(),
+            end_time: new Date(now - 700).toISOString(),
             status: 'ok',
             model: null,
             input_tokens: 0,
             output_tokens: 0,
-            metadata: { step: 'validation', status: 'valid' },
+            metadata: { step: 'schema_rag', top_k: 3 },
           },
           {
             trace_id: traceId,
             span_id: spanId2,
             parent_span_id: spanId1,
-            name: 'llm_inference',
-            start_time: new Date(Date.now() - 240).toISOString(),
-            end_time: new Date().toISOString(),
+            name: 'sqlguard_generate_sql',
+            type: 'llm',
+            start_time: new Date(now - 690).toISOString(),
+            end_time: new Date(now - 220).toISOString(),
             status: 'ok',
             model: 'openai/gpt-oss-20b',
-            input_tokens: 85,
-            output_tokens: 42,
-            metadata: { framework: 'tokentrail_sdk', environment: 'production' },
+            provider: 'groq',
+            input_tokens: 838,
+            output_tokens: 124,
+            metadata: { framework: 'tokentrail_sdk', temperature: 0.0 },
+          },
+          {
+            trace_id: traceId,
+            span_id: spanId3,
+            parent_span_id: spanId1,
+            name: 'ast_guard_validation',
+            type: 'tool',
+            start_time: new Date(now - 210).toISOString(),
+            end_time: new Date(now - 170).toISOString(),
+            status: 'ok',
+            model: null,
+            input_tokens: 0,
+            output_tokens: 0,
+            metadata: { parser: 'sqlglot', read_only: true },
+          },
+          {
+            trace_id: traceId,
+            span_id: spanId4,
+            parent_span_id: spanId1,
+            name: 'execute_db_query',
+            type: 'tool',
+            start_time: new Date(now - 160).toISOString(),
+            end_time: new Date(now).toISOString(),
+            status: 'ok',
+            model: null,
+            input_tokens: 0,
+            output_tokens: 0,
+            metadata: { dialect: 'postgres', rows_returned: 14 },
           },
         ],
       };
@@ -90,7 +128,7 @@ export const RoadmapPage: React.FC = () => {
 
       setPingSuccess(true);
       setLastTraceId(traceId);
-      toast.success('Test telemetry sent successfully! Check Overview or Traces.');
+      toast.success('4-step agent telemetry sent successfully! Check Traces for the Execution Waterfall.');
 
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ['overview'] });
@@ -259,54 +297,227 @@ export const RoadmapPage: React.FC = () => {
                 3
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Add 2 Lines of Code in Your Application</h2>
+                <h2 className="text-base font-bold text-white">Add Telemetry to Your Application Pipeline</h2>
                 <p className="text-xs text-slate-400">Choose the pattern that matches your project architecture</p>
               </div>
             </div>
 
             {/* Pattern Switcher Tabs */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveTab('openai')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  activeTab === 'openai'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                1. OpenAI / Groq Wrapper
-              </button>
+            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs flex-wrap">
               <button
                 type="button"
                 onClick={() => setActiveTab('agent')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'agent'
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                2. Multi-Step Spans (Waterfall)
+                <Layers className="w-3.5 h-3.5" />
+                <span>1. Multi-Step Agent (Waterfall)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('langgraph')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'langgraph'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Workflow className="w-3.5 h-3.5" />
+                <span>2. LangGraph State Node</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('openai')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'openai'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>3. 1-Line Client Wrapper</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('rest')}
                 className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                   activeTab === 'rest'
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                3. Direct cURL / HTTP
+                4. REST / HTTP
               </button>
             </div>
           </div>
 
-          {/* Tab 1: OpenAI / Groq Client Wrapper */}
+          {/* Root Architectural Notice */}
+          <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs text-amber-200/95 leading-relaxed flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-white block font-semibold mb-0.5">
+                Why was only 1 span showing in the Execution Waterfall before?
+              </strong>
+              <span>
+                If you only instrument your single LLM call, TokenTrail will only receive 1 span. To display a full cascading Execution Waterfall (e.g., Schema Retrieval ➔ LLM Inference ➔ Security AST Guard ➔ Database Query ➔ Chart Summary), envelop your pipeline in <code className="text-amber-300 font-mono font-bold">with tt.trace(...)</code> or pass a shared <code className="text-amber-300 font-mono font-bold">trace_id</code> to each step below!
+              </span>
+            </div>
+          </div>
+
+          {/* Tab 1: Multi-Step Agent & RAG Pipeline (Recommended) */}
+          {activeTab === 'agent' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-xs text-cyan-200/90 leading-relaxed">
+                <strong>Recommended for Multi-Step AI Agents & RAG:</strong> Wrapping your pipeline inside <code className="text-cyan-300 font-mono font-bold">with tt.trace("name"):</code> automatically binds a unified <code className="text-cyan-300 font-mono">trace_id</code> across all child spans. Every single step renders as a cascading bar in the Execution Waterfall!
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`from tokentrail import TokenTrail
+
+# 1. Initialize TokenTrail (auto-detects TOKENTRAIL_API_KEY from environment)
+tt = TokenTrail()
+
+def handle_user_request(user_question: str):
+    # Envelop the entire request in a trace. All child spans inherit the same trace_id!
+    with tt.trace("sqlguard_agent_pipeline"):
+        
+        # Step 1: Schema / RAG Retrieval Span
+        with tt.span("schema_retrieval", type="retrieval") as s1:
+            schema = db.get_relevant_schema(user_question)
+
+        # Step 2: LLM SQL Synthesis Span (records model, token counts & calculated cost)
+        with tt.span("generate_sql_llm", type="llm", model="openai/gpt-oss-20b", provider="groq") as s2:
+            response = llm_client.chat.completions.create(...)
+            # Tokens are auto-tracked or can be explicitly recorded:
+            s2.set_tokens(prompt=838, completion=124)
+
+        # Step 3: AST Security Guardrail Span
+        with tt.span("ast_guard_validation", type="tool") as s3:
+            is_safe = ast_parser.validate(response.sql)
+
+        # Step 4: Actual Database Query Execution Span
+        with tt.span("execute_db_query", type="tool") as s4:
+            records = db.execute(response.sql)
+
+        # Step 5: Heuristic Chart & Summary Mapping
+        with tt.span("chart_mapping_summary", type="tool") as s5:
+            chart = select_chart_type(records)
+
+    return {"records": records, "chart": chart}`,
+                      'code-agent'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copiedSection === 'code-agent' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-slate-500"># In your agent pipeline (e.g., query_service.py, agent.py):</p>
+                <p className="text-indigo-400">from tokentrail import TokenTrail</p>
+                <p className="text-emerald-400">tt = TokenTrail()</p>
+                <br />
+                <p className="text-slate-500"># Wrap your overall workflow to create a unified trace:</p>
+                <p className="text-cyan-400">with tt.trace("sqlguard_agent_pipeline"):</p>
+                <br />
+                <p className="text-slate-500 pl-4"># 1. Retrieval Span</p>
+                <p className="text-indigo-400 pl-4">with tt.span("schema_retrieval", type="retrieval"):</p>
+                <p className="text-slate-300 pl-8">schema = db.get_schema(question)</p>
+                <br />
+                <p className="text-slate-500 pl-4"># 2. LLM Inference Span</p>
+                <p className="text-indigo-400 pl-4">with tt.span("generate_sql_llm", type="llm", model="openai/gpt-oss-20b") as s:</p>
+                <p className="text-slate-300 pl-8">sql = llm.invoke(...)</p>
+                <p className="text-emerald-400 pl-8">s.set_tokens(prompt=838, completion=124)</p>
+                <br />
+                <p className="text-slate-500 pl-4"># 3. Security Guard Span</p>
+                <p className="text-indigo-400 pl-4">with tt.span("ast_guard_validation", type="tool"):</p>
+                <p className="text-slate-300 pl-8">is_safe = ast_parser.validate(sql)</p>
+                <br />
+                <p className="text-slate-500 pl-4"># 4. Database Query Span</p>
+                <p className="text-indigo-400 pl-4">with tt.span("execute_db_query", type="tool"):</p>
+                <p className="text-slate-300 pl-8">records = db.execute(sql)</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: LangGraph / Distributed State Nodes */}
+          {activeTab === 'langgraph' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-200/90 leading-relaxed">
+                <strong>For Graph-Based Agent Frameworks (LangGraph, CrewAI, AutoGen):</strong> When nodes run as standalone functions across different modules, pass a shared <code className="text-indigo-300 font-mono font-bold">trace_id</code> inside the state dictionary.
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+`import uuid
+from tokentrail import TokenTrail
+
+tt = TokenTrail()
+
+# 1. At the API endpoint, initialize state with a unique trace_id:
+trace_id = f"trace_{uuid.uuid4().hex}"
+initial_state = {
+    "question": user_question,
+    "trace_id": trace_id,
+}
+
+# 2. Inside LangGraph nodes, pass trace_id to tt.span:
+def schema_retrieval_node(state):
+    trace_id = state.get("trace_id")
+    with tt.span("schema_retrieval", type="retrieval", trace_id=trace_id):
+        schema = fetch_schema(state["question"])
+    return {"schema": schema}
+
+def generate_sql_node(state):
+    trace_id = state.get("trace_id")
+    with tt.span("sqlguard_generate_sql", type="llm", trace_id=trace_id, model="openai/gpt-oss-20b", provider="groq") as s:
+        response = call_llm(state["schema"], state["question"])
+        s.set_tokens(prompt=838, completion=124)
+    return {"sql_query": response}
+
+def execute_sql_node(state):
+    trace_id = state.get("trace_id")
+    with tt.span("execute_db_query", type="tool", trace_id=trace_id):
+        rows = execute_database_query(state["sql_query"])
+    return {"results": rows}`,
+                      'code-langgraph'
+                    )
+                  }
+                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copiedSection === 'code-langgraph' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+
+                <p className="text-slate-500"># In main API endpoint (entrypoint):</p>
+                <p className="text-indigo-400">import uuid</p>
+                <p className="text-emerald-400">trace_id = f"trace_&#123;uuid.uuid4().hex&#125;"</p>
+                <p className="text-slate-300">initial_state = &#123; "question": q, "trace_id": trace_id &#125;</p>
+                <br />
+                <p className="text-slate-500"># In each node (nodes.py):</p>
+                <p className="text-cyan-400">def generate_sql_node(state):</p>
+                <p className="text-indigo-400 pl-4">with tt.span("sqlguard_generate_sql", type="llm", trace_id=state["trace_id"], model="openai/gpt-oss-20b"):</p>
+                <p className="text-slate-300 pl-8">res = call_llm(state["question"])</p>
+                <p className="text-slate-300 pl-4">return &#123; "sql": res &#125;</p>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: OpenAI / Groq Client Wrapper */}
           {activeTab === 'openai' && (
             <div className="space-y-3 animate-in fade-in duration-200">
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-200/90 leading-relaxed">
-                <strong>Zero Code Rewrite:</strong> Simply wrap your existing OpenAI or Groq client. All token usage, streaming latency, model parameters, and spend are captured automatically in the background!
+                <strong>Zero Code Rewrite for Direct Chats:</strong> Wrap your existing OpenAI or Groq client in 1 line. All token counts, streaming latency, model parameters, and spend are captured automatically!
               </div>
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
@@ -317,7 +528,7 @@ export const RoadmapPage: React.FC = () => {
 `from tokentrail import TokenTrail
 from openai import OpenAI
 
-# 1. Initialize TokenTrail (safely auto-detects env variables)
+# 1. Initialize TokenTrail
 tt = TokenTrail()
 
 # 2. Wrap your OpenAI or Groq client in 1 line
@@ -339,7 +550,7 @@ print(response.choices[0].message.content)`,
                   {copiedSection === 'code-openai' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 </button>
 
-                <p className="text-slate-500"># In your app (e.g. main.py, agent.py, chat_service.py):</p>
+                <p className="text-slate-500"># In your app (e.g. main.py, chat_service.py):</p>
                 <p className="text-indigo-400">from tokentrail import TokenTrail</p>
                 <p className="text-indigo-400">from openai import OpenAI</p>
                 <br />
@@ -358,74 +569,11 @@ print(response.choices[0].message.content)`,
             </div>
           )}
 
-          {/* Tab 2: Multi-Step Execution Waterfall Spans */}
-          {activeTab === 'agent' && (
-            <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-xs text-cyan-200/90 leading-relaxed">
-                <strong>Why was the Waterfall showing only 1 span before?</strong> Because only 1 step was recorded. By wrapping your pipeline steps in <code className="text-cyan-300 font-mono font-bold">with tt.start_span("name"):</code>, each step appears as its own cascading timeline bar in TokenTrail!
-              </div>
-
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
-                <button
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(
-`from tokentrail import TokenTrail
-
-tt = TokenTrail()
-
-# Full multi-step workflow in SQLGuard / Nexus RAG:
-def run_user_query(query: str):
-    # Step 1: Retrieve Database Schema
-    with tt.start_span("retrieve_schema"):
-        schema = db.get_schema()
-
-    # Step 2: LLM SQL Generation
-    with tt.start_span("generate_sql_llm", model="openai/gpt-oss-20b"):
-        sql = client.chat.completions.create(...)
-
-    # Step 3: AST Validation
-    with tt.start_span("validate_ast"):
-        is_safe = sql_parser.validate(sql)
-
-    # Step 4: Execute query
-    with tt.start_span("execute_query"):
-        result = db.execute(sql)
-
-    return result`,
-                      'code-agent'
-                    )
-                  }
-                  className="absolute top-3 right-3 p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-md text-slate-300 hover:text-white transition-colors cursor-pointer"
-                  title="Copy Code"
-                >
-                  {copiedSection === 'code-agent' ? <CheckCheck className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-
-                <p className="text-slate-500"># Multi-step agent workflow (e.g. in SQLGuard query pipeline):</p>
-                <p className="text-indigo-400">from tokentrail import TokenTrail</p>
-                <p className="text-emerald-400">tt = TokenTrail()</p>
-                <br />
-                <p className="text-slate-500"># Step 1: Schema Retrieval Span</p>
-                <p className="text-cyan-400">with tt.start_span("retrieve_schema"):</p>
-                <p className="text-slate-300 pl-4">schema = db.get_schema()</p>
-                <br />
-                <p className="text-slate-500"># Step 2: LLM SQL Generation Span</p>
-                <p className="text-cyan-400">with tt.start_span("generate_sql_llm", model="openai/gpt-oss-20b"):</p>
-                <p className="text-slate-300 pl-4">sql = client.chat.completions.create(...)</p>
-                <br />
-                <p className="text-slate-500"># Step 3: AST Validation Span</p>
-                <p className="text-cyan-400">with tt.start_span("validate_ast"):</p>
-                <p className="text-slate-300 pl-4">is_safe = ast_parser.validate(sql)</p>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 3: Direct HTTP Ingestion */}
+          {/* Tab 4: Direct HTTP Ingestion */}
           {activeTab === 'rest' && (
             <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-200/90 leading-relaxed">
-                <strong>Language Agnostic:</strong> Send telemetry from Node.js, Next.js, Go, or cURL directly via REST API.
+              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs text-purple-200/90 leading-relaxed">
+                <strong>Language Agnostic:</strong> Send multi-span batches from Node.js, Next.js, Go, or cURL directly via REST API.
               </div>
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
@@ -441,13 +589,25 @@ def run_user_query(query: str):
       {
         "trace_id": "trace_1001",
         "span_id": "span_1001_1",
-        "name": "chat_completion",
-        "start_time": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
-        "end_time": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+        "name": "schema_retrieval",
+        "type": "retrieval",
+        "start_time": "2026-10-06T12:00:00Z",
+        "end_time": "2026-10-06T12:00:01Z",
+        "status": "ok"
+      },
+      {
+        "trace_id": "trace_1001",
+        "span_id": "span_1001_2",
+        "parent_span_id": "span_1001_1",
+        "name": "sqlguard_generate_sql",
+        "type": "llm",
+        "start_time": "2026-10-06T12:00:01Z",
+        "end_time": "2026-10-06T12:00:03Z",
         "status": "ok",
         "model": "openai/gpt-oss-20b",
-        "input_tokens": 120,
-        "output_tokens": 45
+        "provider": "groq",
+        "input_tokens": 838,
+        "output_tokens": 124
       }
     ]
   }'`,
