@@ -84,6 +84,14 @@ class BackgroundSender:
             wait_time = max(0.005, self.flush_interval - elapsed)
             batch = self.queue.get_batch(self.batch_size, timeout=wait_time)
 
+            if self._stop_event.is_set():
+                if batch:
+                    # Re-enqueue batch if shutdown occurred while getting batch
+                    with self.queue._condition:
+                        for item in reversed(batch):
+                            self.queue._deque.appendleft(item)
+                break
+
             if batch:
                 with self._lock:
                     self._is_sending = True
@@ -174,9 +182,11 @@ class BackgroundSender:
         """Stops background sender thread and performs final flush."""
         try:
             self._stop_event.set()
-            self._drain_all()
+            with self.queue._condition:
+                self.queue._condition.notify_all()
             if self._thread.is_alive():
                 self._thread.join(timeout=timeout)
+            self._drain_all()
             self._client.close()
         except Exception as e:
             logger.debug("TokenTrail shutdown error: %s", e)

@@ -6,6 +6,7 @@ from tokentrail import TokenTrail
 
 def test_sync_nested_spans() -> None:
     tt = TokenTrail(api_key="tt_mock_key", endpoint="http://localhost:8000")
+    tt.sender.shutdown()
 
     with tt.span("root_span", type="chain") as root:
         assert root.parent_span_id is None
@@ -36,7 +37,7 @@ def test_sync_nested_spans() -> None:
 
 @pytest.mark.asyncio
 async def test_async_nested_spans() -> None:
-    tt = TokenTrail(api_key="tt_mock_key", endpoint="http://localhost:8000", flush_interval=60.0)
+    tt = TokenTrail(api_key="tt_mock_key", endpoint="http://localhost:8000")
     tt.sender.shutdown()
 
     async with tt.span("async_root", type="chain") as root:
