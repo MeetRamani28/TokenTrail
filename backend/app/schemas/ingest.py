@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -11,11 +11,10 @@ class SpanIngestItem(BaseModel):
     @classmethod
     def map_alternative_fields(cls, data: Any) -> Any:
         if isinstance(data, dict):
-            from datetime import timezone
             if "started_at" not in data and "start_time" in data:
                 data["started_at"] = data["start_time"]
             if "started_at" not in data or data.get("started_at") is None:
-                data["started_at"] = datetime.now(timezone.utc)
+                data["started_at"] = datetime.now(UTC)
             if "ended_at" not in data and "end_time" in data:
                 data["ended_at"] = data["end_time"]
             if "prompt_tokens" not in data and "input_tokens" in data:
