@@ -85,25 +85,16 @@ Get up and running in under 2 minutes with interactive copy-paste snippets and i
 
 ---
 
-### 6. Dynamic Model Pricing Table
-Never redeploy code just to update an LLM price change. TokenTrail decouples pricing from your application logic.
+### 6. Dynamic Model Pricing Table & Project Settings
+Never redeploy code just to update an LLM price change. Manage runtime dynamic pricing rates, SDK authentication keys, and project parameters directly from the dashboard.
 
 ![TokenTrail Dynamic Pricing Table](docs/screenshots/06-dynamic-pricing.png)
 
 - **Runtime Dynamic Pricing**: Manage input and output rates per 1M tokens directly from the dashboard.
-- **Quick Suggestions**: 1-click presets for popular models (`gpt-4o-mini`, `llama-3.3-70b`, `llama-3.1-8b`, `command-r`).
-- **Ingestion-Time Enrichment**: Incoming spans are dynamically enriched with real-time costs during ingest.
-
----
-
-### 7. Multi-Project & Multi-Tenant Workspaces
-Isolate environments, teams, and applications with scoped API keys.
-
-![TokenTrail Multi-Project Switcher](docs/screenshots/07-project-management.png)
-
-- **Project Switcher**: Seamlessly switch between projects (e.g. `SQLGuard`, `nex`, `Default Project`).
+- **Quick Suggestions**: 1-click presets for popular models (`openai/gpt-oss-20b`, `llama-3.3-70b`, `llama-3.1-8b`, `command-r`).
+- **Ingestion-Time Cost Enrichment**: Incoming spans are dynamically enriched with real-time costs during ingest.
 - **Scoped Ingestion Keys**: Generate and manage secure `tt_live_...` API keys with SHA-256 backend hashing.
-- **Multi-Device Clerk Session Management**: Persistent login across mobile, tablet, and desktop.
+- **Multi-Project Workspaces**: Seamlessly isolate environments, teams, and applications.
 
 ---
 
