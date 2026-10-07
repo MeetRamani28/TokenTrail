@@ -7,7 +7,6 @@ import { Calendar, Radio, Menu, Compass } from 'lucide-react';
 import clsx from 'clsx';
 import { ProjectSelector } from '../project/ProjectSelector';
 import { SignedIn } from '@clerk/clerk-react';
-import { ThreeLogo } from '../common/ThreeLogo';
 import { UserNavMenu } from './UserNavMenu';
 
 interface NavbarProps {
@@ -39,9 +38,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
           <Menu className="w-4 h-4" />
         </button>
 
-        {/* 3D Canvas Logo in Navbar (visible on mobile/tablet) */}
+        {/* Brand Logo in Navbar (visible on mobile/tablet) */}
         <div className="lg:hidden flex items-center gap-1.5 mr-1">
-          <ThreeLogo size={28} />
+          <img src="/icon.png" alt="TokenTrail Logo" className="w-6 h-6 object-contain" />
           <span className="font-extrabold text-sm text-white tracking-tight hidden sm:inline">
             TokenTrail
           </span>

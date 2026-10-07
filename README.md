@@ -1,17 +1,34 @@
-# TokenTrail ⚡
-### Zero-Overhead, High-Precision LLM Observability & Cost Tracking Engine
+<div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React: 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
-[![Tailwind CSS: v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Database: PostgreSQL / Supabase](https://img.shields.io/badge/Database-PostgreSQL_%2F_Supabase-4169E1.svg?logo=postgresql&logoColor=white)](https://supabase.com/)
-[![Clerk Auth](https://img.shields.io/badge/Auth-Clerk_JWT-6C47FF.svg?logo=clerk&logoColor=white)](https://clerk.com/)
-[![Benchmark: p50 13.6µs](https://img.shields.io/badge/SDK_Overhead-p50_13.6µs-10B981.svg)](backend/benchmarks/raw/)
+  <img src="docs/images/icon.png" alt="TokenTrail Logo" width="130" style="border-radius: 24px;" />
+
+  # TokenTrail
+
+  ### Enterprise-Grade Universal LLM Observability & Multi-Agent Telemetry Engine
+
+  <p align="center">
+    <b>Zero-Overhead • Micro-Cent Cost Tracking • Sub-Millisecond P50 Latency • Multi-Agent Waterfalls</b>
+  </p>
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+  [![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+  [![React: 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
+  [![Tailwind CSS: v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Database: PostgreSQL / Supabase](https://img.shields.io/badge/Database-PostgreSQL_%2F_Supabase-4169E1.svg?logo=postgresql&logoColor=white)](https://supabase.com/)
+  [![Clerk Auth](https://img.shields.io/badge/Auth-Clerk_JWT-6C47FF.svg?logo=clerk&logoColor=white)](https://clerk.com/)
+  [![SDK Overhead: p50 13.6µs](https://img.shields.io/badge/SDK_Overhead-p50_13.6µs-10B981.svg)](backend/benchmarks/raw/)
+
+</div>
+
+<br />
 
 > **TokenTrail** is a self-hostable, production-grade LLM observability platform engineered for AI agents, RAG pipelines, and multi-step LLM workflows. Featuring sub-millisecond SDK tracing, real-time micro-cent cost tracking, dynamic model pricing, multi-span execution waterfalls, and multi-project workspace isolation.
+
+<p align="center">
+  <img src="docs/images/brand-card.png" alt="TokenTrail Neon Brand Identity" width="100%" style="border-radius: 14px; border: 1px solid #1e293b;" />
+</p>
 
 ---
 
