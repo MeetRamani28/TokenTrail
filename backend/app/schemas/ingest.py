@@ -11,14 +11,19 @@ class SpanIngestItem(BaseModel):
     @classmethod
     def map_alternative_fields(cls, data: Any) -> Any:
         if isinstance(data, dict):
+            from datetime import timezone
             if "started_at" not in data and "start_time" in data:
                 data["started_at"] = data["start_time"]
+            if "started_at" not in data or data.get("started_at") is None:
+                data["started_at"] = datetime.now(timezone.utc)
             if "ended_at" not in data and "end_time" in data:
                 data["ended_at"] = data["end_time"]
             if "prompt_tokens" not in data and "input_tokens" in data:
                 data["prompt_tokens"] = data["input_tokens"]
             if "completion_tokens" not in data and "output_tokens" in data:
                 data["completion_tokens"] = data["output_tokens"]
+            if "type" not in data and "span_type" in data:
+                data["type"] = data["span_type"]
         return data
 
     span_id: str = Field(

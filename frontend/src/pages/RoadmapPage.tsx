@@ -524,7 +524,12 @@ export const RoadmapPage: React.FC = () => {
                     onClick={() =>
                       copyToClipboard(
 `import os
+import sys
 from dotenv import load_dotenv
+
+# Ensure UTF-8 output across all operating systems (Windows cp1252 fix)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # 1. Load environment variables (.env)
 load_dotenv()
@@ -539,17 +544,17 @@ def run_chat():
     # 3. Use your standard LLM client normally — zero wrapper code needed!
     client = Groq()
 
-    print("🤖 Calling LLM via standard Groq client...")
+    print("[TokenTrail] Calling LLM via standard Groq client...")
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"
         messages=[
             {"role": "user", "content": "Explain LLM observability and latency tracking in 2 sentences."}
         ]
     )
 
-    print("\\n✅ LLM Output:")
+    print("\\n[Output] LLM Response:")
     print(response.choices[0].message.content)
-    print("\\n⚡ Telemetry (duration, tokens, cost) sent automatically to TokenTrail!")
+    print("\\n[TokenTrail] Telemetry (duration, tokens, cost) sent automatically to TokenTrail!")
 
 if __name__ == "__main__":
     run_chat()`,
@@ -563,8 +568,9 @@ if __name__ == "__main__":
                   </button>
                 </div>
 
-                <p className="text-slate-500">import os</p>
+                <p className="text-slate-500">import os, sys</p>
                 <p className="text-slate-500">from dotenv import load_dotenv</p>
+                <p className="text-slate-500">if sys.platform == "win32": sys.stdout.reconfigure(encoding="utf-8")</p>
                 <p className="text-slate-500">load_dotenv()</p>
                 <br />
                 <p className="text-amber-400 font-bold">import tokentrail.auto  <span className="text-slate-500 font-normal"># ⚡ Global Zero-Code Auto-Instrumentation</span></p>
@@ -573,10 +579,10 @@ if __name__ == "__main__":
                 <br />
                 <p className="text-slate-300">def run_chat():</p>
                 <p className="text-cyan-400 pl-4">client = Groq()</p>
-                <p className="text-slate-400 pl-4">print("Calling model...")</p>
+                <p className="text-slate-400 pl-4">print("[TokenTrail] Calling LLM via standard Groq client...")</p>
                 <br />
                 <p className="text-emerald-400 pl-4">response = client.chat.completions.create(</p>
-                <p className="text-slate-300 pl-8">model="llama-3.3-70b-versatile",</p>
+                <p className="text-slate-300 pl-8">model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"</p>
                 <p className="text-slate-300 pl-8">messages=[&#123;"role": "user", "content": "Explain LLM observability."&#125;]</p>
                 <p className="text-emerald-400 pl-4">)</p>
                 <br />
@@ -602,42 +608,48 @@ if __name__ == "__main__":
                     onClick={() =>
                       copyToClipboard(
 `import os
+import sys
 import time
 from dotenv import load_dotenv
 
+# Ensure UTF-8 output across all operating systems (Windows cp1252 fix)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+
+# 1. Load environment variables (.env)
 load_dotenv()
 
-# 1. Enable global auto-patching for LLMs
+# 2. Enable global auto-patching for LLMs and import decorators
 import tokentrail.auto
 from tokentrail import agent, tool
 from groq import Groq
 
 client = Groq()
 
-# 2. Tool Function: Automatically nests under whichever agent calls it
+# 3. Tool Function: Automatically nests under whichever agent calls it
 @tool(name="database_schema_fetcher")
 def fetch_database_schema(db_name: str) -> list[str]:
     print(f"  [Tool] Querying schema for: {db_name}...")
     time.sleep(0.1)  # Simulate DB latency
     return ["users (id, email)", "orders (id, user_id, amount, status)"]
 
-# 3. Sub-Agent: Specialist agent that nests under the Orchestrator
+# 4. Sub-Agent: Specialist agent that nests under the Orchestrator
 @agent(name="sql_generator_agent", role="database_specialist")
 def generate_sql(schema: list[str], prompt: str) -> str:
     print("  [Agent] SQL Specialist generating SQL query...")
     # Any LLM call made here automatically nests as a child of sql_generator_agent!
     res = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"
         messages=[
             {"role": "user", "content": f"Schema: {schema}. Write SQL for: {prompt}"}
         ]
     )
     return res.choices[0].message.content or "SELECT 1;"
 
-# 4. Root Orchestrator Agent: Top-level root waterfall span
+# 5. Root Orchestrator Agent: Top-level root waterfall span
 @agent(name="orchestrator_pipeline", role="lead_planner")
 def run_orchestrator(user_question: str):
-    print(f"🚀 [Orchestrator] Starting workflow for: '{user_question}'")
+    print(f"[Orchestrator] Starting workflow for: '{user_question}'")
     
     # Step A: Tool execution (child of Orchestrator)
     schema = fetch_database_schema("analytics_db")
@@ -645,8 +657,9 @@ def run_orchestrator(user_question: str):
     # Step B: Sub-agent execution (child of Orchestrator, parent of LLM)
     sql_query = generate_sql(schema, user_question)
     
-    print("\\n✅ Generated SQL Query:")
+    print("\\n[Output] Generated SQL Query:")
     print(sql_query)
+    print("\\n[TokenTrail] Multi-Agent hierarchical waterfall spans captured and delivered!")
     return sql_query
 
 if __name__ == "__main__":
@@ -699,11 +712,16 @@ if __name__ == "__main__":
                     onClick={() =>
                       copyToClipboard(
 `import os
+import sys
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
 from groq import Groq
 from tokentrail.middleware import use_tokentrail
+
+# Ensure UTF-8 output across all operating systems (Windows cp1252 fix)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 load_dotenv()
 
@@ -721,12 +739,12 @@ class ChatRequest(BaseModel):
 async def chat_endpoint(req: ChatRequest):
     # This LLM call automatically binds to the HTTP POST /api/chat root trace!
     res = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"
         messages=[{"role": "user", "content": req.message}]
     )
     return {
         "reply": res.choices[0].message.content,
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-20b",
         "status": "success"
     }
 
@@ -773,6 +791,11 @@ if __name__ == "__main__":
                     onClick={() =>
                       copyToClipboard(
 `import os
+import sys
+
+# Ensure UTF-8 output across all operating systems (Windows cp1252 fix)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # 1. Configure environment variables (or load from .env)
 os.environ["TOKENTRAIL_API_KEY"] = "${apiKeyDisplay}"
@@ -785,14 +808,15 @@ import tokentrail_setup
 from groq import Groq
 client = Groq()
 
-print("🤖 Calling LLM with zero-dependency standalone telemetry...")
+print("[TokenTrail] Calling LLM with zero-dependency standalone drop-in telemetry...")
 response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": "Explain zero-overhead observability."}]
+    model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"
+    messages=[{"role": "user", "content": "Explain zero-overhead observability in 2 concise sentences."}]
 )
 
-print("\\n✅ LLM Output:")
-print(response.choices[0].message.content)`,
+print("\\n[Output] LLM Response:")
+print(response.choices[0].message.content)
+print("\\n[TokenTrail] Standalone telemetry enqueued and dispatched via tokentrail_setup.py!")`,
                         'code-dropin'
                       )
                     }
@@ -810,7 +834,7 @@ print(response.choices[0].message.content)`,
                 <p className="text-cyan-400">client = Groq()</p>
                 <br />
                 <p className="text-emerald-400">response = client.chat.completions.create(</p>
-                <p className="text-slate-300 pl-4">model="llama-3.3-70b-versatile",</p>
+                <p className="text-slate-300 pl-4">model="openai/gpt-oss-20b",  # or "llama-3.3-70b-versatile"</p>
                 <p className="text-slate-300 pl-4">messages=[&#123;"role": "user", "content": "Explain zero-overhead observability."&#125;]</p>
                 <p className="text-emerald-400">)</p>
               </div>
@@ -825,7 +849,7 @@ print(response.choices[0].message.content)`,
 
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-2 text-slate-300 relative">
                 <div className="flex items-center justify-between text-slate-400 text-[11px] border-b border-slate-900 pb-2 mb-2">
-                  <span className="text-slate-300 font-bold">cURL Ingest Command (Multi-Span Trace)</span>
+                  <span className="text-slate-300 font-bold">cURL Ingest Command (Linux / macOS / Bash)</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -868,7 +892,7 @@ print(response.choices[0].message.content)`,
                     className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
                   >
                     {copiedSection === 'code-rest' ? <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>Copy cURL Command</span>
+                    <span>Copy cURL</span>
                   </button>
                 </div>
 
@@ -876,6 +900,35 @@ print(response.choices[0].message.content)`,
                 <p className="text-emerald-400 pl-4">-H "X-API-Key: {apiKeyDisplay}" \</p>
                 <p className="text-emerald-400 pl-4">-H "Content-Type: application/json" \</p>
                 <p className="text-slate-400 pl-4">-d '&#123; "spans": [ ... ] &#125;'</p>
+              </div>
+
+              {/* Windows PowerShell Alternative */}
+              <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800/80 font-mono text-xs space-y-2 text-slate-300">
+                <div className="flex items-center justify-between text-slate-400 text-[11px] border-b border-slate-900 pb-1.5">
+                  <span className="text-cyan-300 font-bold">Windows PowerShell (Invoke-RestMethod)</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+`$iso = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$headers = @{ "X-API-Key" = "${apiKeyDisplay}"; "Content-Type" = "application/json" }
+$body = @{
+  spans = @(
+    @{ trace_id = "trace_ps_1"; span_id = "s_root"; name = "orchestrator"; type = "chain"; duration_ms = 450; status = "ok"; started_at = $iso },
+    @{ trace_id = "trace_ps_1"; span_id = "s_llm"; parent_span_id = "s_root"; name = "groq_call"; type = "llm"; model = "openai/gpt-oss-20b"; duration_ms = 350; status = "ok"; started_at = $iso }
+  )
+} | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Uri "${endpointDisplay}/v1/ingest" -Method Post -Headers $headers -Body $body`,
+                        'code-pwsh'
+                      )
+                    }
+                    className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {copiedSection === 'code-pwsh' ? <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>Copy PowerShell</span>
+                  </button>
+                </div>
+                <p className="text-cyan-400 text-[11px]">Invoke-RestMethod -Uri "{endpointDisplay}/v1/ingest" -Method Post -Headers $headers -Body $body</p>
               </div>
             </div>
           )}
@@ -908,15 +961,15 @@ print(response.choices[0].message.content)`,
                 {mode === 'multiagent' && 'python multi_agent_pipeline.py'}
                 {mode === 'fastapi' && 'python server.py  # Or: uvicorn server:app --reload'}
                 {mode === 'dropin' && 'python run_standalone.py'}
-                {mode === 'rest' && 'Run the cURL command above'}
+                {mode === 'rest' && 'Run the cURL or PowerShell command above'}
               </p>
             </div>
 
             <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-1.5 text-slate-400">
               <span className="text-slate-400 text-[11px] block border-b border-slate-900 pb-1">Expected Console Output:</span>
-              <p className="text-slate-300">🤖 Calling LLM...</p>
-              <p className="text-emerald-400">✅ LLM Output: [Model Completion Text]</p>
-              <p className="text-slate-500">⚡ Telemetry sent automatically in background thread.</p>
+              <p className="text-slate-300">[TokenTrail] Calling LLM via standard client...</p>
+              <p className="text-emerald-400">[Output] LLM Response: [Model Completion Text]</p>
+              <p className="text-slate-500">[TokenTrail] Telemetry sent automatically in background!</p>
             </div>
           </div>
         </motion.div>

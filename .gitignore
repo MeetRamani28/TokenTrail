@@ -73,3 +73,6 @@ temp/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local manual integration test suite
+test/

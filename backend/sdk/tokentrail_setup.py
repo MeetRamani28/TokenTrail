@@ -85,6 +85,15 @@ class _BackgroundIngester:
         except Exception:
             pass
 
+    def _get_api_key(self) -> str:
+        return self.api_key or os.getenv("TOKENTRAIL_API_KEY") or os.getenv("TT_API_KEY") or ""
+
+    def _get_ingest_url(self) -> str:
+        endpoint = os.getenv("TOKENTRAIL_ENDPOINT") or os.getenv("TT_ENDPOINT")
+        if endpoint:
+            return f"{endpoint.rstrip('/')}/v1/ingest"
+        return self.ingest_url
+
     def _worker(self) -> None:
         while not self.stop_event.is_set():
             time.sleep(1.0)
@@ -93,18 +102,22 @@ class _BackgroundIngester:
                 while self.queue and len(batch) < 100:
                     batch.append(self.queue.popleft())
 
-            if batch and self.api_key:
-                self._send(batch)
+            key = self._get_api_key()
+            if batch and key:
+                self._send(batch, key)
 
-    def _send(self, batch: list[dict[str, Any]]) -> None:
+    def _send(self, batch: list[dict[str, Any]], key: str | None = None) -> None:
+        api_key = key or self._get_api_key()
+        if not api_key:
+            return
         try:
             payload = json.dumps({"spans": batch}).encode("utf-8")
             req = urllib.request.Request(
-                self.ingest_url,
+                self._get_ingest_url(),
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "X-API-Key": self.api_key,
+                    "X-API-Key": api_key,
                 },
                 method="POST",
             )
@@ -120,8 +133,9 @@ class _BackgroundIngester:
         with self.lock:
             while self.queue and len(batch) < 100:
                 batch.append(self.queue.popleft())
-        if batch and self.api_key:
-            self._send(batch)
+        key = self._get_api_key()
+        if batch and key:
+            self._send(batch, key)
 
 
 _INGESTER = _BackgroundIngester(api_key=API_KEY, ingest_url=INGEST_URL)
