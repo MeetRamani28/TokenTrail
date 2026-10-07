@@ -26,10 +26,6 @@
 
 > **TokenTrail** is a self-hostable, production-grade LLM observability platform engineered for AI agents, RAG pipelines, and multi-step LLM workflows. Featuring sub-millisecond SDK tracing, real-time micro-cent cost tracking, dynamic model pricing, multi-span execution waterfalls, and multi-project workspace isolation.
 
-<p align="center">
-  <img src="docs/images/brand-card.png" alt="TokenTrail Neon Brand Identity" width="100%" style="border-radius: 14px; border: 1px solid #1e293b;" />
-</p>
-
 ---
 
 ## 📸 Product Tour & Live Platform Features
