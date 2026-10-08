@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.api.v1.alerts import router as alerts_router
 from app.api.v1.analytics import router as analytics_router
@@ -59,6 +60,9 @@ if settings.cors_origins_list:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Compress all HTTP responses larger than 500 bytes to save bandwidth
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 @app.middleware("http")

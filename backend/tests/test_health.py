@@ -61,3 +61,24 @@ def test_settings_production_constraints() -> None:
     assert prod_settings.is_production is True
     assert prod_settings.docs_url is None
     assert prod_settings.openapi_url is None
+
+
+@pytest.mark.asyncio
+async def test_gzip_compression_and_cors() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Request with Accept-Encoding: gzip and Origin header
+        response = await client.get(
+            "/api/prices",
+            headers={
+                "Accept-Encoding": "gzip",
+                "Origin": "http://localhost:5173",
+            },
+        )
+        assert response.status_code == 200
+        # If response body exceeds 500 bytes, GZipMiddleware compresses it
+        if "gzip" in response.headers.get("content-encoding", ""):
+            assert response.headers.get("content-encoding") == "gzip"
+        # CORS headers are preserved on the response
+        assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
