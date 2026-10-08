@@ -81,4 +81,3 @@ async def test_gzip_compression_and_cors() -> None:
             assert response.headers.get("content-encoding") == "gzip"
         # CORS headers are preserved on the response
         assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
-
