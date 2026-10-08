@@ -65,19 +65,21 @@ def test_settings_production_constraints() -> None:
 
 @pytest.mark.asyncio
 async def test_gzip_compression_and_cors() -> None:
+    @app.get("/_test/gzip-payload", include_in_schema=False)
+    async def _test_gzip_payload() -> dict[str, str]:
+        return {"data": "tokentrail_compression_test_" * 50}
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        # Request with Accept-Encoding: gzip and Origin header
         response = await client.get(
-            "/api/prices",
+            "/_test/gzip-payload",
             headers={
                 "Accept-Encoding": "gzip",
                 "Origin": "http://localhost:5173",
             },
         )
         assert response.status_code == 200
-        # If response body exceeds 500 bytes, GZipMiddleware compresses it
-        if "gzip" in response.headers.get("content-encoding", ""):
-            assert response.headers.get("content-encoding") == "gzip"
-        # CORS headers are preserved on the response
+        # Response exceeds 500 bytes, so GZipMiddleware compresses it
+        assert response.headers.get("content-encoding") == "gzip"
+        # CORS headers are preserved on compressed responses
         assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
