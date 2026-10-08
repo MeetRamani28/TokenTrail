@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
 
         {/* Brand Logo in Navbar (visible on mobile/tablet) */}
         <div className="lg:hidden flex items-center gap-1.5 mr-1">
-          <img src="/icon.png" alt="TokenTrail Logo" className="w-6 h-6 object-contain" />
+          <img src="/icon.png" alt="TokenTrail Logo" className="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(6,182,212,0.45)]" />
           <span className="font-extrabold text-sm text-white tracking-tight hidden sm:inline">
             TokenTrail
           </span>

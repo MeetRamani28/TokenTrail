@@ -15,7 +15,6 @@ function TokenParticles() {
     const color3 = new THREE.Color('#6366f1'); // Indigo
 
     for (let i = 0; i < count; i++) {
-      // Spiral trail along z and x axes
       const theta = (i / count) * Math.PI * 6;
       const radius = 2.5 + Math.sin(i * 0.2) * 1.0;
       pos[i * 3] = Math.cos(theta) * radius + (Math.random() - 0.5) * 0.8;
@@ -40,14 +39,8 @@ function TokenParticles() {
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          args={[colors, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
       <pointsMaterial
         size={0.15}
@@ -65,13 +58,11 @@ export const TokenTrailCanvas: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // Check user preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setIsReducedMotion(mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setIsReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handler);
 
-    // Pause when tab is hidden
     const visHandler = () => setIsVisible(!document.hidden);
     document.addEventListener('visibilitychange', visHandler);
 

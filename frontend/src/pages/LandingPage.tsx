@@ -22,9 +22,7 @@ export const LandingPage: React.FC = () => {
       {/* Navigation Header */}
       <header className="relative z-10 max-w-7xl mx-auto w-full px-6 h-20 flex items-center justify-between border-b border-slate-800/60">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/15 overflow-hidden">
-            <img src="/icon.png" alt="TokenTrail Logo" className="w-7 h-7 object-contain" />
-          </div>
+          <img src="/icon.png" alt="TokenTrail Logo" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(6,182,212,0.45)] hover:scale-105 transition-transform" />
           <span className="font-bold text-lg tracking-tight text-white">TokenTrail</span>
         </div>
 

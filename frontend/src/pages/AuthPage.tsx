@@ -191,9 +191,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialMode = 'sign-in' }) =
       {/* Top Header */}
       <header className="px-8 py-5 flex items-center justify-between border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/15 overflow-hidden">
-            <img src="/icon.png" alt="TokenTrail Logo" className="w-7 h-7 object-contain" />
-          </div>
+          <img src="/icon.png" alt="TokenTrail Logo" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(6,182,212,0.45)] hover:scale-105 transition-transform" />
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold tracking-tight text-white">TokenTrail</span>
           </div>

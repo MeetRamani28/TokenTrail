@@ -29,9 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       {/* Brand with 3D Canvas Logo */}
       <div className="h-16 px-4 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/15 overflow-hidden">
-            <img src="/icon.png" alt="TokenTrail Logo" className="w-7 h-7 object-contain" />
-          </div>
+          <img src="/icon.png" alt="TokenTrail Logo" className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(6,182,212,0.45)] hover:scale-105 transition-transform" />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-base tracking-tight text-white">TokenTrail</span>
