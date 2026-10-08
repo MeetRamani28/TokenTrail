@@ -25,11 +25,25 @@ elif "postgresql" in settings.DATABASE_URL:
     connect_args["statement_cache_size"] = 0
     connect_args["prepared_statement_cache_size"] = 0
 
+engine_kwargs: dict[str, Any] = {
+    "echo": settings.is_development and settings.LOG_LEVEL.upper() == "DEBUG",
+    "future": True,
+    "connect_args": connect_args,
+}
+
+if "postgresql" in settings.DATABASE_URL:
+    engine_kwargs.update(
+        {
+            "pool_size": 5,
+            "max_overflow": 5,
+            "pool_recycle": 300,
+            "pool_pre_ping": True,
+        }
+    )
+
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.is_development and settings.LOG_LEVEL.upper() == "DEBUG",
-    future=True,
-    connect_args=connect_args,
+    **engine_kwargs,
 )
 
 # Enable WAL mode and foreign keys for SQLite in development

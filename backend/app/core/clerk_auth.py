@@ -31,7 +31,12 @@ def get_jwk_client() -> jwt.PyJWKClient | None:
     global _jwk_client
     if _jwk_client is None and settings.CLERK_JWKS_URL:
         try:
-            _jwk_client = jwt.PyJWKClient(settings.CLERK_JWKS_URL, cache_keys=True, lifespan=3600)
+            _jwk_client = jwt.PyJWKClient(
+                settings.CLERK_JWKS_URL,
+                cache_keys=True,
+                max_cached_keys=16,
+                lifespan=3600,
+            )
         except Exception as e:
             logger.warning("Failed to initialize PyJWKClient: %s", e)
     return _jwk_client

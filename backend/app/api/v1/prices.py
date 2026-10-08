@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import price_cache
 from app.core.db import get_db
 from app.models.models import ModelPrice
 from app.schemas.price import ModelPriceCreate, ModelPriceResponse, ModelPriceUpdate
@@ -55,6 +56,7 @@ async def create_price(
     db.add(price)
     await db.commit()
     await db.refresh(price)
+    price_cache.clear()
     return price
 
 
@@ -106,6 +108,7 @@ async def update_price(
 
     await db.commit()
     await db.refresh(price)
+    price_cache.clear()
     return price
 
 
@@ -128,3 +131,4 @@ async def delete_price(
 
     await db.delete(price)
     await db.commit()
+    price_cache.clear()

@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import price_cache
 from app.models.models import ModelPrice
 
 KNOWN_FALLBACK_PRICES: dict[str, tuple[float, float]] = {
@@ -44,6 +45,14 @@ async def calculate_cost(
     norm_provider = provider.strip().lower() if provider else None
     ref_time = timestamp or datetime.now(UTC)
 
+    cache_key = f"{norm_provider or ''}:{norm_model}"
+    cached_rates = price_cache.get(cache_key)
+    if cached_rates is not None:
+        in_rate, out_rate = cached_rates
+        input_cost = (prompt_tokens * in_rate) / 1_000_000.0
+        output_cost = (completion_tokens * out_rate) / 1_000_000.0
+        return round(input_cost + output_cost, 7), False
+
     # 1. Query with model and provider
     query = (
         select(ModelPrice)
@@ -80,6 +89,7 @@ async def calculate_cost(
             cleaned_model
         )
         if fallback_rate:
+            price_cache.set(cache_key, fallback_rate)
             in_rate, out_rate = fallback_rate
             input_cost = (prompt_tokens * in_rate) / 1_000_000.0
             output_cost = (completion_tokens * out_rate) / 1_000_000.0
@@ -88,6 +98,8 @@ async def calculate_cost(
         return 0.0, True
 
     # 4. Accurate cost calculation per 1M tokens
+    rates = (price_record.input_price_per_1m, price_record.output_price_per_1m)
+    price_cache.set(cache_key, rates)
     input_cost = (prompt_tokens * price_record.input_price_per_1m) / 1_000_000.0
     output_cost = (completion_tokens * price_record.output_price_per_1m) / 1_000_000.0
     total_cost = round(input_cost + output_cost, 7)
