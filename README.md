@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="docs/images/icon.png" alt="TokenTrail Logo" width="130" style="border-radius: 24px;" />
+  <img src="docs/images/icon.png" alt="TokenTrail Logo" width="130" />
 
   # TokenTrail
 
