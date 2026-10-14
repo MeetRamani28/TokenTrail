@@ -166,7 +166,7 @@ export const RoadmapPage: React.FC = () => {
     ? `${keyData?.key_prefix || 'tt_live'}...`
     : 'tt_live_your_project_key';
 
-  const endpointDisplay = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend.onrender.com');
+  const endpointDisplay = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend-26lf.onrender.com');
 
   return (
     <div className="space-y-10 max-w-6xl mx-auto pb-16">

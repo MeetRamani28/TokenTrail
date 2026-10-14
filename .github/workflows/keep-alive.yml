@@ -13,7 +13,7 @@ jobs:
       - name: Ping TokenTrail Render Backend Endpoint
         run: |
           echo "Sending automated keep-alive ping to TokenTrail Render Backend..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://tokentrail-backend.onrender.com/healthz || echo "000")
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://tokentrail-backend-26lf.onrender.com/healthz || echo "000")
           echo "Backend responded with HTTP status: $HTTP_STATUS"
           if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "Render Backend is warm and active."

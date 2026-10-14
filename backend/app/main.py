@@ -86,6 +86,7 @@ app.include_router(jobs_router)
 app.include_router(projects_router)
 
 
+@app.get("/", tags=["Health"])
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
 async def health_check() -> dict[str, Any]:

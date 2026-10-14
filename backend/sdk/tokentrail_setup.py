@@ -39,7 +39,7 @@ API_KEY = os.getenv("TOKENTRAIL_API_KEY") or os.getenv("TT_API_KEY") or ""
 ENDPOINT = (
     os.getenv("TOKENTRAIL_ENDPOINT")
     or os.getenv("TT_ENDPOINT")
-    or "https://tokentrail-backend.onrender.com"
+    or "https://tokentrail-backend-26lf.onrender.com"
 )
 INGEST_URL = f"{ENDPOINT.rstrip('/')}/v1/ingest"
 

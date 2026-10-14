@@ -458,11 +458,11 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 flex items-center justify-between">
-              <code>export TOKENTRAIL_ENDPOINT="{import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend.onrender.com')}"</code>
+              <code>export TOKENTRAIL_ENDPOINT="{import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend-26lf.onrender.com')}"</code>
               <button
                 type="button"
                 onClick={() => {
-                  const endpoint = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend.onrender.com');
+                  const endpoint = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://tokentrail-backend-26lf.onrender.com');
                   navigator.clipboard.writeText(`export TOKENTRAIL_ENDPOINT="${endpoint}"`);
                   toast.success('Endpoint export copied');
                 }}

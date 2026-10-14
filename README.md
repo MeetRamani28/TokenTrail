@@ -233,7 +233,7 @@ import tokentrail_setup  # ⚡ Standalone Zero-Dependency Telemetry!
 ```python
 from tokentrail import TokenTrail
 
-tt = TokenTrail(api_key="tt_live_...", endpoint="https://tokentrail-backend.onrender.com")
+tt = TokenTrail(api_key="tt_live_...", endpoint="https://tokentrail-backend-26lf.onrender.com")
 
 with tt.span("sqlguard_pipeline", type="chain"):
     with tt.span("sqlguard_schema_retrieval", type="tool"):
@@ -248,7 +248,7 @@ with tt.span("sqlguard_pipeline", type="chain"):
 You can ingest spans from any programming language via standard HTTP:
 
 ```bash
-curl -X POST "https://tokentrail-backend.onrender.com/v1/ingest" \
+curl -X POST "https://tokentrail-backend-26lf.onrender.com/v1/ingest" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: tt_live_your_project_key" \
   -d '{

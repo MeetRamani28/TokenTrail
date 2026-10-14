@@ -16,7 +16,6 @@ import { SettingsPage } from './pages/SettingsPage';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { AuthPage } from './pages/AuthPage';
 
-import { ServerWarmup } from './components/common/ServerWarmup';
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
 
@@ -63,7 +62,6 @@ export const App: React.FC = () => {
   const content = (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <ServerWarmup />
         <AppContent />
         <Toaster position="top-right" theme="dark" richColors closeButton />
       </QueryClientProvider>
